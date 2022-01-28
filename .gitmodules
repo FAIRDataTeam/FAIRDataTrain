@@ -1,0 +1,3 @@
+[submodule "TrainHandler"]
+	path = TrainHandler
+	url = https://github.com/FAIRDataTeam/TrainHandler.git
