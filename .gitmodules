@@ -1,3 +1,6 @@
+[submodule "DataStation"]
+	path = DataStation
+	url = https://github.com/FAIRDataTeam/FAIRDataStation.git
 [submodule "TrainHandler"]
 	path = TrainHandler
 	url = https://github.com/FAIRDataTeam/TrainHandler.git
