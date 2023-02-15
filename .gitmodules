@@ -4,3 +4,6 @@
 [submodule "specs"]
 	path = specs
 	url = https://github.com/fdt-specs/fdt-specs.github.io.git
+[submodule "FAIRDataStation"]
+	path = FAIRDataStation
+	url = https://github.com/FAIRDataTeam/FAIRDataStation
