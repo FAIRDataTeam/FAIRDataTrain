@@ -1,12 +1,10 @@
-[submodule "DataStation"]
-	path = DataStation
-	url = https://github.com/FAIRDataTeam/FAIRDataStation.git
+[submodule "FAIRDataStation"]
+	path = FAIRDataStation
+	url = https://github.com/FAIRDataTeam/FAIRDataStation
 [submodule "TrainHandler"]
 	path = TrainHandler
 	url = https://github.com/FAIRDataTeam/TrainHandler.git
 [submodule "specs"]
 	path = specs
 	url = https://github.com/fdt-specs/fdt-specs.github.io.git
-[submodule "FAIRDataStation"]
-	path = FAIRDataStation
-	url = https://github.com/FAIRDataTeam/FAIRDataStation
+
