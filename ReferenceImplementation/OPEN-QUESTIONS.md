@@ -153,8 +153,29 @@ fdt-p:Commercial`) and the matching prohibition on the `evt-registry-research` o
 bump, `FINDINGS.md` line — before WP-1.3 writes any evaluator code against it. Until then,
 WP-1.3 can only demonstrate its first half.
 
-### Q10 — Are the other work packages' acceptance criteria runnable?
-**Blocks:** nothing yet; it decides whether each work package starts on solid ground.
+### Q10 — Are the other work packages' acceptance criteria runnable? — **ANSWERED 12 Sep 2026**
+**Blocks:** M1 entirely. The sweep is `docs/reviews/2026-09-12-acceptance-criteria-sweep.md`.
+
+**No. 2 of 25 criteria are runnable as written, 11 with caveats, 12 not at all — including
+all five M1 packages.** The sweep asked each criterion three questions against the files
+themselves: do the artefacts it names exist, is the named output derivable from the named
+inputs, and does it exercise the path it claims. Q9's defects were the visible corner of one
+fixture set written around a single story that never describes the M1 scenario at all.
+
+Independently re-verified before this entry was written, with rdflib over the merged fixture
+graph (818 triples): no station that supports SPARQL publishes a dataset, and no dataset
+distribution anywhere is reachable by SPARQL (both `ASK`s answer `false`), so M1's own
+scenario — a SPARQL train visiting a station with a test graph — has no fixture to run on;
+exactly one of seven offers auto-approves; the payload digest is `sha256("test")` and the
+artefact digest is the empty-string hash rotated by one character; and the time-to-groin
+train is a `fdt-o:DockerTrain` whose every ODRL permission says `runQuery` while its hop-1
+descriptor asks `executeContainer`, down a chain where `rav-oost` (SQL) and `hap-oost`
+(FHIRAPI) cannot run Docker at all.
+
+§3 of the sweep reduces the twelve blocked packages to twelve decisions, A–L. **A–E sit on
+M1's path**; A alone (which ODRL action a container train performs, and whether the request
+template is rewritten per hop) touches five packages and three agreements. They are recorded
+as Q14.
 
 WP-1.3's criterion contains **three** independent defects — a fixture that does not exist
 (Q9), a target agreement that is not derivable (finding 19), and a named path that the named
@@ -162,7 +183,8 @@ fixture cannot reach (finding 20). That is not bad luck. The criteria were writt
 fixtures nobody had executed, in design sessions where no validator could run — the same
 condition that produced findings 12–14.
 
-**Default:** before a work package starts, check its acceptance criterion for runnability —
+**Standing rule adopted:** before a work package starts, check its acceptance criterion for
+runnability —
 do the fixtures it names exist, are they internally consistent, and do they exercise the path
 the criterion claims? Record what is missing and fix the fixtures under the change protocol
 *first*. Doing this at the point where the tests fail instead means the pressure is on to
@@ -283,3 +305,24 @@ source) or *forbidden*. Nothing is ever silently waved through, and the audit di
 the two. **Default: adopt it**, and record the supplied evidence and its source on the
 agreement.
 
+
+### Q14 — The M1 fixture set: five decisions before any M1 code
+
+**Blocks:** WP-1.1 through WP-1.5 — all of M1. Full statement and evidence in
+`docs/reviews/2026-09-12-acceptance-criteria-sweep.md` §3; F–L there block M2–M4 and are not
+urgent.
+
+| | Decision | Reaches |
+|---|---|---|
+| **A** | Which ODRL action a container train performs (`fdt-p:executeContainer` vs `runQuery`), and whether the request template is rewritten per hop | WP-1.1, 1.3, 2.6, 3.2, 3.3 and three agreements |
+| **B** | The agreement derivation rule and what `AgreementShape` requires — findings 19, 23–25, 28, 30 and Q12's four decisions — then regenerate `agr-9a01/9a02/9a04` | WP-1.3, 2.4 |
+| **C** | The auto-approving offer and the HealthAI commercial request (Q9, finding 20), and where `consumerType` comes from | WP-1.3 |
+| **D** | One coherent M1 station fixture: a SPARQL dataset at a SPARQL station, an auto-approve offer, a gene–disease output schema, a test graph, a P1 single-visit plan in both JSON-LD and Turtle, and a k<5 result | WP-1.4, 1.5 |
+| **E** | Real payload bytes with true, distinct digests, and one URL form | WP-1.2, 2.6, 3.4 |
+
+**Default if not decided:** take A as `fdt-p:executeContainer` (the descriptor and FDT-O agree
+that a `DockerTrain` executes a container; the offers are the outlier), and build D and E as
+new fixtures rather than bending the time-to-groin story to serve M1 as well — it is an M3
+discovery chain and was never the M1 scenario. B and C follow the decisions already recorded
+in Q12 and Q13. Every one goes through the change protocol: `fdt-commons` first, `VERSION`
+bump, `FINDINGS.md` line, validators green.
