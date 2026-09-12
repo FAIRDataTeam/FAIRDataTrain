@@ -8,12 +8,12 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** WP-1.3, then WP-1.4 and WP-1.5 — the three that stand between here and a train visiting a station end to end.
+**Next:** WP-1.4 (PEP 2, the SPARQL adapter, PEP 3), then WP-1.5 (the Handler CLI) — the two that stand between here and a train visiting a station end to end.
 
 | | | |
 |---|---|---|
 | **M0** Foundations | ✅ done | 12 Sep 2026 |
-| **M1** One visit | 🟨 2 of 5 — WP-1.1, 1.2 done; WP-1.3 blocked on Q14-B | |
+| **M1** One visit | 🟨 3 of 5 — WP-1.1, 1.2, 1.3 done; 1.4 and 1.5 remain | |
 | **M2** Fan-out and governance | ⬜ not started | |
 | **M3** Multi-hop | ⬜ not started | |
 | **M4** Hardening and alignment | ⬜ not started | |
@@ -97,17 +97,20 @@ the fixture side; the code has not started.
       the serialisation a descriptor carries and rejected in the shape's own words. Token
       verification is per network and checks signatures (ADR-017). Findings 39, 40, 41 came out
       of building it. Eight mutations, all caught.
-- [ ] **WP-1.3 — Negotiation on arrival (auto-approval path)** · 1.2 · L
+- [x] **WP-1.3 — Negotiation on arrival (auto-approval path)** · 1.2 · L
       *Acceptance: the fixture offer and request produce the target agreement; the commercial
-      request is Refused with the prohibition named.* **Ready to start** — Q14-B settled the
-      rule the evaluator implements, and all four fixture agreements now derive from their own
-      offers and requests. The second clause still needs Q14-C (the commercial request does not
-      exist, Q9/finding 20); until then WP-1.3 can demonstrate the grant path and refusal on a
-      prohibition the fixtures do have.
+      request is Refused with the prohibition named.* **First clause met** — the evaluator
+      produces an agreement **isomorphic** to the published `agr-m1-01`, and what it produces is
+      run through the contracts' own checker. Refusal is exercised on a prohibition the fixtures
+      do have (`odrl:sell`) and on an unevidenced eligibility fact; the *commercial* request the
+      criterion names still does not exist (**Q14-C**, Q9/finding 20), so that one clause waits
+      on a fixture, not on code.
 - [ ] **WP-1.4 — Orchestrator, PEP 2, SPARQL adapter, PEP 3** · 1.3 · L
       *Acceptance: the M1 scenario; a result violating k triggers `visit.rejected` at PEP 3 with
-      a justification.* Fixtures ready, including the adversarial one: same train, same
-      agreement, one parameter different, and PEP 3 must reach opposite outcomes.
+      a justification.* **Next.** Fixtures ready, including the adversarial one: same train,
+      same agreement, one parameter different, and PEP 3 must reach opposite outcomes. An active
+      agreement now exists for PEP 2 to check, and its duties — the k-anonymity threshold and
+      the retention period — are the rules PEP 3 enforces.
 - [ ] **WP-1.5 — Handler core v0 (library + CLI)** · 1.1 · M
       *Acceptance: the M1 scenario driven by `fdt-handler run plan.jsonld`.* Fixtures ready —
       `examples/plan-gene-disease-single.jsonld`, asserted isomorphic to its Turtle.
