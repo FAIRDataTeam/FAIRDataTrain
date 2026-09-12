@@ -23,7 +23,7 @@ make check          # the gate: every contract validator in fdt-commons and FDT-
 | [`FAIRDataTrainHandler`](https://github.com/FAIRDataTeam/FAIRDataTrainHandler) | the Handler: run model, orchestration, conditions, failure policy | skeleton |
 | [`IndividualGateway`](https://github.com/FAIRDataTeam/IndividualGateway) | the data controller's agent across stations | skeleton |
 | [`StationDirectory`](https://github.com/FAIRDataTeam/StationDirectory) | the **metadata registry**: harvests and indexes what Depots and Stations publish, FDP-Index-shaped; not a trust anchor (ADR-029). Indexes trains as well as stations, so the repository name is inaccurate too (Q17) | skeleton |
-| [`TrainGarage`](https://github.com/FAIRDataTeam/TrainGarage) | the **Train Depot**: the authority for a train — payload bytes, digests, parameters, declared output, the owner's offer and keys (ADR-029). Repository not renamed yet (Q17) | skeleton |
+| [`TrainGarage`](https://github.com/FAIRDataTeam/TrainGarage) | the **Train Depot**: the authority for a train — payload bytes, digests it computes rather than repeats, parameters, declared output, the owner's offer and public keys (ADR-029). Repository not renamed yet (Q17) | **v0** |
 | [`FDTConsole`](https://github.com/FAIRDataTeam/FDTConsole) | one front-end, three role-based apps | design system and generated contract types; no screens yet |
 
 The Java prototypes — `FAIRDataStation`, `TrainHandler`, `TrainHandler-server`,

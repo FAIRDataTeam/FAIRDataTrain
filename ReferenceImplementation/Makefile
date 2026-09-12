@@ -81,6 +81,8 @@ test:  ## run each component's tests, lint and types, in its own environment
 	  ( cd $(ROOT)/$$c \
 	    && uv venv --quiet --allow-existing --python 3.12 .venv \
 	    && uv pip install --quiet --python .venv/bin/python -e ".[dev]" \
+	    && { [ "$$c" = TrainGarage ] || uv pip install --quiet --python .venv/bin/python \
+	         -e $(ROOT)/TrainGarage; } \
 	    && .venv/bin/pytest -q \
 	    && .venv/bin/ruff check src tests \
 	    && .venv/bin/mypy --strict src ) || exit 1; \
@@ -101,7 +103,7 @@ e2e:  ## run the milestone scenarios with the real components against each other
 	@echo "── end-to-end ───────────────────────────────────────────────"
 	@uv venv --quiet --allow-existing --python 3.12 $(E2E)
 	@uv pip install --quiet --python $(E2E)/bin/python pytest \
-	  -e $(ROOT)/FAIRDataStation-py -e $(ROOT)/FAIRDataTrainHandler
+	  -e $(ROOT)/FAIRDataStation-py -e $(ROOT)/FAIRDataTrainHandler -e $(ROOT)/TrainGarage
 	@$(E2E)/bin/pytest -q $(ROOT)/tests/e2e
 	@echo
 	@echo "  M1 one visit ✓ · M2 fan-out and governance · M3 multi-hop · M4 composition"

@@ -440,14 +440,18 @@ URLs and submodule paths for everyone, and is an action on the organisation rath
 code. I have not taken it. (GitHub redirects the old name, so it is not destructive — but it is
 still outward-facing and yours.)
 
-**What the code does now.** Everything *inside* the repositories says Depot. The submodule paths
-`ReferenceImplementation/TrainGarage` and `ReferenceImplementation/StationDirectory`, and the two
-skeleton Python packages `fdt_garage` and `fdt_directory`, are untouched, so nothing is
-half-renamed: the boundary is exactly the repository.
+**What the code does now.** Everything *inside* the repositories says Depot, including the
+Python package: WP-5.2 renamed `fdt_garage` to `fdt_depot`, since that is a change within a
+repository and not an act on the organisation. What is untouched is the repository name, the
+submodule paths `ReferenceImplementation/TrainGarage` and
+`ReferenceImplementation/StationDirectory`, and the `StationDirectory` package (nothing has been
+built there yet). So the boundary is exactly the repository: `git clone TrainGarage` gives you a
+Train Depot.
 
 **If you say yes**, the rename is: GitHub repo → update `.gitmodules` and the submodule path →
-`git mv` the package → the `PY_COMPONENTS` list in the `Makefile`. Suggested names: `TrainDepot`,
-and for the registry something that does not say "station" — `FDTRegistry` or `FDTIndex`.
+the `PY_COMPONENTS` list in the `Makefile` → the three `-e $(ROOT)/TrainGarage` lines in it.
+Suggested names: `TrainDepot`, and for the registry something that does not say "station" —
+`FDTRegistry` or `FDTIndex`.
 
 **Blocks nothing.** WP-5.2 builds the Depot in whichever repository it lives in.
 

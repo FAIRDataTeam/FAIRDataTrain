@@ -8,7 +8,7 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** **WP-5.2 — Train Depot v0** (M5, below): the authority for a train — payload bytes, `fdt-o:artifactDigest`, declared parameters and output, the owner's offer, the owner's JWKS — populated with several trains, so a station's PEP 1 resolves a train over HTTP instead of from a fixture file. WP-5.1 is done: FDT-O is at 3.0.0 with the Depot rename and `fdt-o:Train` abstract, and the M1 scenario runs unchanged on the rebound contracts. WP-5.3 (the registry) waits on **Q16**, the `fdt-run:targetQuery` grammar; **Q17** (repository renames) and **Q18** (are the train families abstract too?) are yours and block nothing.
+**Next:** **WP-5.4 — several stations, configured and running** (M5, below): more than one station with real data sources, in at least two networks, so per-network terms (ADR-017) are visible rather than asserted, and the same train visiting two stations gets two different agreements. It is the work to do now because **WP-5.3, the metadata registry, is blocked on Q16** — `fdt-run:targetQuery` has no grammar, and it is what a plan uses to select stations from a registry, so the registry's query surface cannot be scoped until you have decided it. WP-5.1 and WP-5.2 are done: FDT-O is at 3.0.0 with the Depot rename and `fdt-o:Train` abstract, and `make e2e` runs the Handler, a station and a Train Depot against each other with the payload digest traced from bytes to checkpoint. **Q16** is the one that blocks work; **Q17** (repository renames) and **Q18** (are the train families abstract too?) block nothing.
 
 | | | |
 |---|---|---|
@@ -163,12 +163,30 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       intermediate train families are abstract too (conservative default: not).
       **Repository renames are Q17** — `TrainGarage` and `StationDirectory` still carry their
       old names on GitHub; everything inside them says Depot.
-- [ ] **WP-5.2 — Train Depot v0** · 5.1 · L
-      The authority for a train: payload bytes, `fdt-o:artifactDigest`, declared parameters and
-      output, the owner's offer over the train, and the owner's JWKS (ADR-028). Populated with
-      several trains. *Acceptance: a station's PEP 1 resolves a train against the Depot over
-      HTTP and rejects a wrong digest; the Handler builds a descriptor from it.*
-- [ ] **WP-5.3 — Metadata registry v0** · 5.2 · M
+- [x] **WP-5.2 — Train Depot v0** · 5.1 · L — **done 13 Sep 2026.** `fdt-depot` 0.1.0,
+      `fdt-commons` 0.18.0 with the Depot API contract. Serves `/`, `/catalogue`, `/trains`,
+      `/trains/{t}`, `/trains/{t}/payload`, `/trains/{t}/output-schema` and a JWKS of the
+      owner's **public** keys. Both halves of the acceptance criterion run against the real
+      component: the station's PEP 1 resolves a train over HTTP and rejects a wrong digest, and
+      the Handler builds a descriptor from the same Depot — `make e2e` now runs all three
+      together and traces the digest from the bytes to the checkpoint.
+      **What makes it an authority: it computes digests rather than repeating them.** It holds
+      the bytes, hashes them at startup, and withholds any train whose bytes do not match its
+      catalogue — saying so, because "I do not have it" and "I have it and it is wrong" are
+      different facts. Without that, PEP 1's digest check compares two copies of one claim.
+      The station's description *and* bytes now come from the same place; taking one from each
+      would make PEP 1 and PEP 2 agree without either checking what the other saw.
+      **Finding 51**, found by asking whether the description a Depot serves conforms to the
+      contracts on its own: it did not, because `fdt-p:underNetwork` was `sh:class
+      fdt-net:Network`, so publishing a conforming train offer required the train's owner to
+      republish who the network trusts. Also **the Handler was emitting non-deterministic
+      descriptors** — rule order followed rdflib's blank node labels, so the same plan produced
+      different documents about two runs in five. And `fdt-commons`' OpenAPI documents were
+      validated by nothing at all; `make check` has a tenth pass now.
+      12 mutations on the Depot, 11 caught, 1 equivalent (noted in `holdings.py`).
+      JWKS is published because ADR-029 makes the Depot the authority for the owner's keys; no
+      counter-signing is implemented anywhere, because **ADR-028 is still Proposed**.
+- [ ] **WP-5.3 — Metadata registry v0** · 5.2 · M — **blocked on Q16**
       Harvests and indexes what Depots and Stations publish, FDP-Index-shaped. **Not a trust
       anchor** — membership is proven by the credential in the token, not by an index entry.
       Shows harvest time rather than implying currency. *Acceptance: a Handler resolves a plan's
