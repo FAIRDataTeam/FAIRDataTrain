@@ -8,7 +8,7 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** decision **Q14-B**, which is now the only thing between the contracts and WP-1.3.
+**Next:** WP-1.3, then WP-1.4 and WP-1.5 — the three that stand between here and a train visiting a station end to end.
 
 | | | |
 |---|---|---|
@@ -68,10 +68,12 @@ the fixture side; the code has not started.
       offer that grants without a human, a test graph, the P1 plan in Turtle and JSON-LD, and a
       released and a k-violating result — all computed by running the train's own payload
       against the graph. Finding 37. v0.9.0.
-- [ ] **Q14-B — the agreement derivation rule and what `AgreementShape` requires.**
-      **Blocks WP-1.3.** Findings 19, 23–25, 28, 30 and the four decisions recorded in Q12: the
-      evidence block, the validity window, the payload digest and the train as first-class terms
-      on the agreement. `AgreementShape` still validates form, never derivation.
+- [x] **Q14-B — the agreement derivation rule and what `AgreementShape` requires.**
+      A normative rule (`protocol/agreement-derivation.md`) and a checker run by `make check`,
+      because the rule relates three documents and SHACL constrains one node at a time. Splits
+      eligibility from usage (`fdt-p:constraintRole`), which is what makes `agr-9a01` derivable
+      at all. Agreements are counter-signed by the train owner with a real Ed25519 key —
+      **ADR-028, draft, needs your acceptance** (`docs/adr/`). Closes findings 19, 23–25, 28, 30.
 - [ ] **Q14-C — the auto-approving offer and the commercial request.** Q9 and finding 20: the
       HealthAI request WP-1.3's second clause names does not exist, and `consumerType` has no
       source. The M1 offer now covers the auto-approval half; this is the refusal half.
@@ -97,9 +99,11 @@ the fixture side; the code has not started.
       of building it. Eight mutations, all caught.
 - [ ] **WP-1.3 — Negotiation on arrival (auto-approval path)** · 1.2 · L
       *Acceptance: the fixture offer and request produce the target agreement; the commercial
-      request is Refused with the prohibition named.* **Blocked on Q14-B**, and the second clause
-      needs Q14-C. `agr-m1-01` is derivable from its own offer and request, so the first clause
-      now has a reachable target — unlike `agr-9a01` (finding 19).
+      request is Refused with the prohibition named.* **Ready to start** — Q14-B settled the
+      rule the evaluator implements, and all four fixture agreements now derive from their own
+      offers and requests. The second clause still needs Q14-C (the commercial request does not
+      exist, Q9/finding 20); until then WP-1.3 can demonstrate the grant path and refusal on a
+      prohibition the fixtures do have.
 - [ ] **WP-1.4 — Orchestrator, PEP 2, SPARQL adapter, PEP 3** · 1.3 · L
       *Acceptance: the M1 scenario; a result violating k triggers `visit.rejected` at PEP 3 with
       a justification.* Fixtures ready, including the adversarial one: same train, same

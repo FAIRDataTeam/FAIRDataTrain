@@ -306,7 +306,7 @@ the two. **Default: adopt it**, and record the supplied evidence and its source 
 agreement.
 
 
-### Q14 — The M1 fixture set — **A, D and E ANSWERED AND IMPLEMENTED 12 Sep 2026**
+### Q14 — The M1 fixture set — **A, B, D and E ANSWERED AND IMPLEMENTED 12 Sep 2026**
 
 **Blocks:** WP-1.1 through WP-1.5 — all of M1. Full statement and evidence in
 `docs/reviews/2026-09-12-acceptance-criteria-sweep.md` §3; F–L there block M2–M4 and are not
@@ -347,8 +347,20 @@ that every declared digest is the hash of bytes in the repository, and that the 
 events and result envelopes are what the train's own payload produces on the committed test
 graph.
 
-**B and C remain open**, and follow the decisions already recorded in Q12 and Q13. B is now the
-last thing between the contracts and WP-1.3: `agr-m1-01` is derivable from its own offer and
+**B — decided and implemented 12 Sep 2026.** Derivation is enforced by a normative rule
+(`fdt-commons/protocol/agreement-derivation.md`) and a checker (`tools/derivation.py`) run by
+`make check`, rather than by SHACL: the rule relates three documents, and a shape reaching into
+a second one passes silently whenever that document is absent (finding 40). The evidence block
+records the eligibility facts, who attested them and when, with the acting person as a
+pseudonym the station can resolve in its own audit log and the agreement cannot — the raw
+claims do not belong in a document that is immutable by design and held by both parties. And
+**agreements are counter-signed by the train owner with a real Ed25519 key** (ADR-028, draft in
+`docs/adr/`), because the station writes the agreement and is a party to it: a digest protects
+the two parties from each other, a signature protects a third party who kept nothing. Closes
+findings 19, 23, 24, 25, 28 and 30. `fdt-commons` v0.12.0.
+
+**C remains open**, and follows the decisions already recorded in Q12 and Q13. What B used to
+block: `agr-m1-01` is derivable from its own offer and
 request, so an evaluator has a target it can reach, but `AgreementShape` still validates form
 rather than derivation (finding 28) and carries neither the evidence block nor the validity
 window Q12 decided on. Every change goes through the change protocol: `fdt-commons` first,
