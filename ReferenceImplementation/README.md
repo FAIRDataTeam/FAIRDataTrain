@@ -22,8 +22,8 @@ make check          # the gate: every contract validator in fdt-commons and FDT-
 | [`FAIRDataStation-py`](https://github.com/FAIRDataTeam/FAIRDataStation-py) | the station: PEP 1–3, agreements, metadata, adapters | WP-0.4 done — `GET /` self-description, three profiles, 75 tests |
 | [`FAIRDataTrainHandler`](https://github.com/FAIRDataTeam/FAIRDataTrainHandler) | the Handler: run model, orchestration, conditions, failure policy | skeleton |
 | [`IndividualGateway`](https://github.com/FAIRDataTeam/IndividualGateway) | the data controller's agent across stations | skeleton |
-| [`StationDirectory`](https://github.com/FAIRDataTeam/StationDirectory) | federation catalogue of station self-descriptions | skeleton |
-| [`TrainGarage`](https://github.com/FAIRDataTeam/TrainGarage) | catalogue of train offers with payload digests | skeleton |
+| [`StationDirectory`](https://github.com/FAIRDataTeam/StationDirectory) | the **metadata registry**: harvests and indexes what Depots and Stations publish, FDP-Index-shaped; not a trust anchor (ADR-029). Indexes trains as well as stations, so the repository name is inaccurate too (Q17) | skeleton |
+| [`TrainGarage`](https://github.com/FAIRDataTeam/TrainGarage) | the **Train Depot**: the authority for a train — payload bytes, digests, parameters, declared output, the owner's offer and keys (ADR-029). Repository not renamed yet (Q17) | skeleton |
 | [`FDTConsole`](https://github.com/FAIRDataTeam/FDTConsole) | one front-end, three role-based apps | design system and generated contract types; no screens yet |
 
 The Java prototypes — `FAIRDataStation`, `TrainHandler`, `TrainHandler-server`,
@@ -72,7 +72,7 @@ ReferenceImplementation/
   deploy/               Dockerfiles, compose per scenario, the three deployment profiles
   fixtures/             scenario data: test graphs, the fixture OIDC provider, synthetic datasets
   tests/e2e/            the milestone scenarios, run against composed stations
-  tests/fakes/          a fake station, garage and TTP, so orchestration is testable alone
+  tests/fakes/          a fake station, depot and TTP, so orchestration is testable alone
 ```
 
 ## Milestones

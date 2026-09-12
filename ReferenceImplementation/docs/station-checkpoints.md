@@ -68,7 +68,7 @@ also where `consumerType` and the other eligibility facts must come from.
 
 | PoC checkpoint | v1 | State |
 |---|---|---|
-| Fetch: train metadata, payload | PEP 1 — fetch descriptor and payload; **verify the payload digest against the train's Garage offer** | digest check absent |
+| Fetch: train metadata, payload | PEP 1 — fetch descriptor and payload; **verify the payload digest against the train's Depot offer** | digest check absent |
 | Validation: train metadata, type | PEP 1 — descriptor against its JSON Schema, train against `TrainShape`, mechanism supported and *enabled* | type-only |
 | — | PEP 1 — **token verified against the network's trusted issuers**; train owner established | absent |
 | — | PEP 1 — the ODRL request against `RequestShape` | absent |

@@ -20,7 +20,7 @@ PY_COMPONENTS := FAIRDataStation-py FAIRDataTrainHandler IndividualGateway Stati
 # The shapes constrain terms the ontology declares, and sh:class follows rdfs:subClassOf*
 # in the data graph. Point the fdt-commons checker at the merged ontology explicitly rather
 # than letting it guess, so a missing ontology is an error and not a quiet false pass.
-export FDT_O_DELTA := $(FDTO)/ontology/fdt-o-v2-delta.ttl
+export FDT_O_ONTOLOGY := $(FDTO)/ontology/fdt-o.ttl
 
 .PHONY: help
 help:  ## show this help

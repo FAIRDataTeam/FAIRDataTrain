@@ -394,3 +394,90 @@ the result**, is the `redacted` outcome ADR-026 already has a word for, and no f
 it; it would need its own decision about what a redacted envelope tells the consumer.
 
 **Blocks nothing.** WP-1.4 runs under the default and is marked with the question id.
+
+---
+
+### Q16 — What grammar does `fdt-run:targetQuery` speak? — **OPEN; blocks WP-5.3, WP-3.1, WP-3.2**
+
+**The question.** A discovery plan selects its stations with `fdt-run:targetQuery`. The term is
+declared, every discovery fixture carries one, and **no grammar says what the string means.**
+
+**Why it needs deciding.** It is the interface between a plan and a registry. A Handler sends
+the query; the registry answers with stations; the run then visits them. Until the grammar is
+fixed, a plan is not portable between registries, two registries can answer the same plan
+differently and both be right, and the Handler cannot tell a query it does not understand from
+one that legitimately matched nothing — which ADR-026 needs it to distinguish, because "no
+station matched" and "the registry could not read the query" are different completeness
+statements.
+
+**What the code does now.** Nothing reads one. `catalogue.py` resolves stations the plan names
+directly (`SingleVisit`), and the Handler refuses any pattern it does not implement rather than
+guessing. So the gap is visible rather than papered over, but it is a hole in the middle of
+discovery.
+
+**The options.** SPARQL over the registry's harvested graph (expressive, and a registry must
+then expose a SPARQL endpoint); a small constrained filter language over a fixed set of facets —
+mechanism, network, theme, controller jurisdiction — which is what an FDP Index search surface
+naturally offers; or DCAT-AP-style faceted query parameters, the cheapest to implement and the
+least expressive. ADR-025 chose JMESPath for conditions on the deliberate principle that *the
+train computes, the plan compares* — the same reasoning argues against a Turing-complete
+discovery query here.
+
+**Blocks.** WP-5.3 cannot scope the registry's query surface without it; WP-3.1 and WP-3.2 are
+discovery patterns that have nothing to send.
+
+---
+
+### Q17 — Do the component repositories get renamed? — **OPEN; WP-5.2 proceeds either way**
+
+**The question.** ADR-029 renamed the Train Garage to the Train Depot and the rename has landed
+in FDT-O, `fdt-commons` and both components. Two GitHub repositories still carry the old names:
+`FAIRDataTeam/TrainGarage`, and `FAIRDataTeam/StationDirectory` — which ADR-029 also makes
+inaccurate, since the registry indexes trains as well as stations.
+
+**Why it is yours.** Renaming a repository in the `FAIRDataTeam` organisation changes clone
+URLs and submodule paths for everyone, and is an action on the organisation rather than in the
+code. I have not taken it. (GitHub redirects the old name, so it is not destructive — but it is
+still outward-facing and yours.)
+
+**What the code does now.** Everything *inside* the repositories says Depot. The submodule paths
+`ReferenceImplementation/TrainGarage` and `ReferenceImplementation/StationDirectory`, and the two
+skeleton Python packages `fdt_garage` and `fdt_directory`, are untouched, so nothing is
+half-renamed: the boundary is exactly the repository.
+
+**If you say yes**, the rename is: GitHub repo → update `.gitmodules` and the submodule path →
+`git mv` the package → the `PY_COMPONENTS` list in the `Makefile`. Suggested names: `TrainDepot`,
+and for the registry something that does not say "station" — `FDTRegistry` or `FDTIndex`.
+
+**Blocks nothing.** WP-5.2 builds the Depot in whichever repository it lives in.
+
+---
+
+### Q18 — Are the intermediate train families abstract too? — **OPEN; conservative default taken**
+
+**The question.** ADR-029 made `fdt-o:Train` abstract. FDT-O has two levels below it: the
+families (`fdt-o:QueryTrain`, `fdt-o:APITrain`, `fdt-o:ScriptTrain`, `fdt-o:ContainerTrain`) and
+the leaves (`fdt-o:SPARQLTrain`, `fdt-o:FHIRTrain`, `fdt-o:DockerTrain`, …). Is a train allowed
+to be `a fdt-o:QueryTrain` without saying which query language, or are the families abstract as
+well, leaving only the leaves instantiable?
+
+**Why it needs deciding.** Your wording was "only one of its sub-types should have instances to
+classify the train for exactly its type, e.g., SPARQLTrain, FHIRTrain" — which reads as *the
+leaf*. ADR-029 as written says `:TrainShape` already requires a concrete type and the ontology
+gains the axiom, and the shape's list includes the families. The two readings differ for exactly
+one kind of graph: a train typed only by its family.
+
+**What the code does now.** The families stay instantiable — the v2 behaviour, and what
+`:TrainShape`'s list already permitted. The ontology marks only `fdt-o:Train` with
+`dash:abstract`.
+
+**Why the default is defensible.** `fdt-o:implementsInteractionMechanism` is separately required
+and carries the real discriminator (`fdt-inst:SPARQL`), so a family-typed train is not ambiguous
+about what would run, and PEP 1 picks its adapter from the mechanism and not from the class. A
+family-typed train is imprecise metadata, not an unsafe one.
+
+**If you say the families are abstract too**, it is one `dash:abstract true` per family and a
+shorter `sh:in` list in `:TrainShape` — the leaves only. The fixtures already use leaves, so
+nothing in the corpus changes.
+
+**Blocks nothing.**

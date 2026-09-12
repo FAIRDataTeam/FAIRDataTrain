@@ -8,7 +8,7 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** **M5 — the testbed** (below). M1 is complete: `fdt-handler run plan.jsonld` drives a train to a station and back, and `make e2e` runs the two real components against each other. The testbed re-orders what follows — a Train Depot, a metadata registry, several stations, a Handler, and UIs for all of them (**ADR-029**).
+**Next:** **WP-5.2 — Train Depot v0** (M5, below): the authority for a train — payload bytes, `fdt-o:artifactDigest`, declared parameters and output, the owner's offer, the owner's JWKS — populated with several trains, so a station's PEP 1 resolves a train over HTTP instead of from a fixture file. WP-5.1 is done: FDT-O is at 3.0.0 with the Depot rename and `fdt-o:Train` abstract, and the M1 scenario runs unchanged on the rebound contracts. WP-5.3 (the registry) waits on **Q16**, the `fdt-run:targetQuery` grammar; **Q17** (repository renames) and **Q18** (are the train families abstract too?) are yours and block nothing.
 
 | | | |
 |---|---|---|
@@ -144,13 +144,25 @@ rather than a component of its own.
 It re-orders the roadmap rather than adding to the end of it: WP-3.4 is re-scoped and pulled
 forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exist earlier.
 
-- [ ] **WP-5.1 — FDT-O v3: the Depot rename, and Train made abstract** · 0.2 · M
-      `fdt-o:GarageCatalog` → `fdt-o:DepotCatalog`, `fdt-p:trainGarage` → `fdt-p:trainDepot`;
-      `fdt-o:Train` becomes abstract (only concrete subclasses have instances) and stops being
-      a subclass of `odrl:Asset` — a train *plays* that role as the target of a policy.
-      Breaking, and cheapest now: Q1 has not published the IRIs. Touches every shape, fixture
-      and generated model, and PR #1 (Q5). *Acceptance: `make check` green on the rebound
-      contracts; the M1 scenario still runs unchanged.*
+- [x] **WP-5.1 — FDT-O v3: the Depot rename, and Train made abstract** · 0.2 · M — **done
+      13 Sep 2026.** FDT-O 3.0.0, `fdt-commons` 0.17.0. `fdt-o:GarageCatalog` →
+      `fdt-o:DepotCatalog`, `fdt-p:trainGarage` → `fdt-p:trainDepot`, `fdt-net:GarageRole` →
+      `fdt-net:DepotRole`, no aliases; `fdt-o:Train` abstract (`dash:abstract`, enforced by
+      `:TrainShape` — OWL has no abstract classes) and no longer `⊑ odrl:Asset`, so a train
+      plays the asset role as the `odrl:target` of a policy. Fixtures are now
+      `a fdt-o:SPARQLTrain` alone. `make check` green, `make e2e` 5 passed, station 187 and
+      Handler 53 tests, ruff and `mypy --strict` clean.
+      **Findings 49 and 50**, both uncovered by dropping the redundant `a fdt-o:Train`:
+      every shape targeting `fdt-o:Train` had been selecting focus nodes by that assertion
+      alone — SHACL resolves `sh:targetClass` through `rdfs:subClassOf*` in the **data** graph,
+      and both checkers kept the hierarchy elsewhere — so with it gone they selected nothing
+      and a train missing payload, title, output and theme validated clean. And
+      `:LinkageStationShape` had never had an instance to check at all. Both checkers now mix
+      the named-class hierarchy into the data graph (`tools/ontology.py`) and count what they
+      select; 7 mutations, 0 survivors, against a green control. Q18 records whether the
+      intermediate train families are abstract too (conservative default: not).
+      **Repository renames are Q17** — `TrainGarage` and `StationDirectory` still carry their
+      old names on GitHub; everything inside them says Depot.
 - [ ] **WP-5.2 — Train Depot v0** · 5.1 · L
       The authority for a train: payload bytes, `fdt-o:artifactDigest`, declared parameters and
       output, the owner's offer over the train, and the owner's JWKS (ADR-028). Populated with
@@ -171,8 +183,9 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       registry need their own views. *Acceptance: the M1 scenario watched end to end in a
       browser — the itinerary, the checkpoints, the justifications, the envelope.*
 
-Open before this can be scoped properly: **`fdt-run:targetQuery` has no grammar** (sweep G), and
-it is what a plan uses to select stations from a registry.
+Open before WP-5.3 can be scoped properly: **`fdt-run:targetQuery` has no grammar** — now
+written up as **Q16**, with the options and what each costs. It is what a plan uses to select
+stations from a registry, so WP-5.2 (the Depot) is the work to do while it is open.
 
 ## M2 — Fan-out and governance
 
@@ -256,6 +269,8 @@ Decisions belong to Luiz (plan §7); code takes the conservative default in
 | **Q14-C** | the commercial request and where `consumerType` comes from | WP-1.3's second clause |
 | **Q15** | does a zero cell violate a k-anonymity duty | nothing; WP-1.4 runs under the default |
 | **Q16** | the `fdt-run:targetQuery` grammar (sweep G) | WP-5.3's scope, WP-3.1, WP-3.2 |
+| **Q17** | do `TrainGarage` and `StationDirectory` get renamed on GitHub | nothing; WP-5.2 builds either way |
+| **Q18** | are the intermediate train families abstract too | nothing; default is that they are not |
 | **Q5** | merge FDT-O PR #1 | WP-0.2's close-out |
 | **Q1** | publish the contracts at their `w3id.org` IRIs | WP-0.2, WP-4.4 |
 | **Q6** | repository visibility | WP-4.4 |
