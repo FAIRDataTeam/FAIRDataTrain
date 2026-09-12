@@ -71,12 +71,26 @@ generate: venv  ## generate models and types from the contracts (WP-0.3)
 	@echo "  Python components; TypeScript types for the consoles:"
 	@cd $(CONSOLE) && npm run generate
 
+# Each component has its own environment with its own dependencies — the checker venv holds
+# only pySHACL, rdflib and jsonschema, so running a component's tests from it fails on the
+# first import. Build per-component venvs here exactly as CI does.
 .PHONY: test
-test: venv  ## run each component's unit tests
+test:  ## run each component's tests, lint and types, in its own environment
 	@for c in $(PY_COMPONENTS); do \
 	  echo "── $$c ──"; \
-	  ( cd $(ROOT)/$$c && $(PY) -m pytest -q ) || exit 1; \
+	  ( cd $(ROOT)/$$c \
+	    && uv venv --quiet --allow-existing --python 3.12 .venv \
+	    && uv pip install --quiet --python .venv/bin/python -e ".[dev]" \
+	    && .venv/bin/pytest -q \
+	    && .venv/bin/ruff check src tests \
+	    && .venv/bin/mypy --strict src ) || exit 1; \
 	done
+	@echo
+	@echo "── FDTConsole ──"
+	@cd $(CONSOLE) \
+	  && { [ -d node_modules ] || npm install --silent --no-fund --no-audit; } \
+	  && npm run --silent generate \
+	  && npm run --silent typecheck
 
 .PHONY: e2e
 e2e:  ## run the milestone scenarios against docker-composed stations

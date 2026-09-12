@@ -109,3 +109,53 @@ history. It is a `GHSAT0` GitHub App token, which expires within 24 hours of iss
 committed in 2022, so **the exposure is long over**. **Default:** leave the history alone —
 rewriting it breaks every existing clone and fork for a credential that cannot be used.
 Revisit only if a scan flags it.
+
+### Q9 — WP-1.3's acceptance criterion names a fixture that does not exist
+**Blocks:** WP-1.3's acceptance as written.
+
+The criterion reads: "the fixture offer `evt-registry-research` and request `ttg-2026q3`
+produce an agreement equal in structure to `agr-9a01`; **the HealthAI commercial request is
+Refused with the prohibition named**." The first half is runnable — all three IRIs are in
+`fdt-commons/examples/policies.ttl`. The second is not: **there is no HealthAI request
+fixture**, and `policies.ttl` declares exactly one `odrl:Request` (`ttg-2026q3`). HealthAI
+B.V. appears only in the mock-ups' sample data; the vocabulary it would need
+(`fdt-p:consumerType`, `fdt-p:Commercial`) exists in `vocab/fdt-profile.ttl`, but no
+instance uses it.
+
+Refusal on a commercial purpose is the one path that exercises an ODRL **prohibition** end
+to end, and it is the S3/G4 denial the consoles are designed around — so this is a missing
+fixture, not a criterion to drop.
+
+**Two further defects in the same criterion** (FINDINGS 19, 20), found while building the
+evaluator against it:
+
+- **`agr-9a01` is not derivable from the offer and request it names.** Both carry
+  `fdt-p:legalBasis`; the agreement drops it while keeping `onwardStateClass` and
+  `carryOnward`. No ODRL rule keeps one constraint and discards another, so "produce an
+  agreement equal in structure to `agr-9a01`" asks an implementation to reproduce an
+  inconsistency. The fixture and the derivation rule must be settled together.
+- **The work package is the auto-approval path, and the named offer requires manual
+  approval.** `evt-registry-research` carries `fdt-p:requiresManualApproval true`, and the
+  protocol event fixture confirms `matched → pending-approval → active`. No offer in the
+  fixture set reaches `active` without a person, so the path M1 depends on has no fixture.
+
+**Default:** add `ex:request\/healthai-2026q3` (assignee HealthAI B.V., `fdt-p:consumerType
+fdt-p:Commercial`) and the matching prohibition on the `evt-registry-research` offer to
+`fdt-commons/examples/policies.ttl`, under the change protocol — fixture first, version
+bump, `FINDINGS.md` line — before WP-1.3 writes any evaluator code against it. Until then,
+WP-1.3 can only demonstrate its first half.
+
+### Q10 — Are the other work packages' acceptance criteria runnable?
+**Blocks:** nothing yet; it decides whether each work package starts on solid ground.
+
+WP-1.3's criterion contains **three** independent defects — a fixture that does not exist
+(Q9), a target agreement that is not derivable (finding 19), and a named path that the named
+fixture cannot reach (finding 20). That is not bad luck. The criteria were written against
+fixtures nobody had executed, in design sessions where no validator could run — the same
+condition that produced findings 12–14.
+
+**Default:** before a work package starts, check its acceptance criterion for runnability —
+do the fixtures it names exist, are they internally consistent, and do they exercise the path
+the criterion claims? Record what is missing and fix the fixtures under the change protocol
+*first*. Doing this at the point where the tests fail instead means the pressure is on to
+bend the code to a broken fixture.
