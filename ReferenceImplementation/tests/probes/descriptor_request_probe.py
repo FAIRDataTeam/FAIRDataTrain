@@ -4,7 +4,7 @@ validate against the policy shapes with the fixture set as context, and compare 
 and constraints with the Turtle request ttg-2026q3 and the offer evt-registry-research."""
 import glob, json, os
 import rdflib, pyshacl
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # metaproject root
 C = os.path.join(ROOT, "fdt-commons")
 doc = json.load(open(os.path.join(C, "examples/protocol/visit-descriptor-ttg-hop1.json")))
 req = doc["negotiation"]["request"]

@@ -2,7 +2,7 @@
 fixture set + vocab + ontology and reports whether pySHACL conforms."""
 import glob, os, sys
 import rdflib, pyshacl
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # metaproject root
 C = os.path.join(ROOT, "fdt-commons")
 shapes = rdflib.Graph()
 for f in glob.glob(os.path.join(C, "shapes", "*.ttl")): shapes.parse(f, format="turtle")

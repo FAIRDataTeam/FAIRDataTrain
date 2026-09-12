@@ -13,9 +13,16 @@ and a human would reject:
 | `schema_probes.py` | can a refusal have no reason, an `active` no agreement, a `delivered` envelope no inspection block and record-level fields? | 29 |
 | `descriptor_request_probe.py` | does the hop-1 descriptor's embedded ODRL request satisfy `RequestShape`, and does it agree with the Turtle request of the same IRI? | 31 |
 
-**They are expected to report CONFORMS and VALID today.** That is the finding. As each gap is
-closed, the corresponding probe should start reporting violations, and at that point it becomes
-a regression test and moves into the normal suite.
+## Status
+
+| Probe | Finding | Now reports |
+|---|---|---|
+| `schema_probes.py` | 29 — **fixed in v0.7** | **invalid** on all six. It is a regression test. |
+| `agreement_probes.py` | 28 — open | CONFORMS on five of seven. Needs the normative derivation rule (finding 19, Q12), not a schema change. |
+| `descriptor_request_probe.py` | 31 — open | the descriptor's request still violates `RequestShape` and still disagrees with the Turtle request of the same IRI. A fixture decision. |
+
+A probe reporting CONFORMS or VALID **is** the finding. When the gap it exposes is closed it
+starts reporting violations, and at that point it has become a regression test — keep it.
 
 Run them against a checkout with `pyshacl`, `rdflib` and `jsonschema` installed; paths are
 relative to the metaproject root.

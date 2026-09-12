@@ -1,6 +1,7 @@
 import json, os
 from jsonschema import Draft202012Validator, FormatChecker
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); S = os.path.join(ROOT, "fdt-commons/schemas")
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+S = os.path.join(ROOT, "fdt-commons/schemas")
 ev = json.load(open(os.path.join(S, "visit-event.schema.json"))); res = json.load(open(os.path.join(S, "visit-result.schema.json")))
 def run(schema, inst, label):
     errs = list(Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(inst))
