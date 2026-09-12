@@ -306,7 +306,7 @@ the two. **Default: adopt it**, and record the supplied evidence and its source 
 agreement.
 
 
-### Q14 — The M1 fixture set: five decisions before any M1 code
+### Q14 — The M1 fixture set — **A, D and E ANSWERED AND IMPLEMENTED 12 Sep 2026**
 
 **Blocks:** WP-1.1 through WP-1.5 — all of M1. Full statement and evidence in
 `docs/reviews/2026-09-12-acceptance-criteria-sweep.md` §3; F–L there block M2–M4 and are not
@@ -320,9 +320,36 @@ urgent.
 | **D** | One coherent M1 station fixture: a SPARQL dataset at a SPARQL station, an auto-approve offer, a gene–disease output schema, a test graph, a P1 single-visit plan in both JSON-LD and Turtle, and a k<5 result | WP-1.4, 1.5 |
 | **E** | Real payload bytes with true, distinct digests, and one URL form | WP-1.2, 2.6, 3.4 |
 
-**Default if not decided:** take A as `fdt-p:executeContainer` (the descriptor and FDT-O agree
-that a `DockerTrain` executes a container; the offers are the outlier), and build D and E as
-new fixtures rather than bending the time-to-groin story to serve M1 as well — it is an M3
-discovery chain and was never the M1 scenario. B and C follow the decisions already recorded
-in Q12 and Q13. Every one goes through the change protocol: `fdt-commons` first, `VERSION`
-bump, `FINDINGS.md` line, validators green.
+**A — decided: the train stays a container train.** `fdt-p:runQuery` is defined for query
+trains and `fdt-p:executeContainer` for container and script trains, so a `fdt-o:DockerTrain`
+performs `executeContainer` and the ODRL offers, which say `runQuery`, are the defect. The
+chain also carries state in the train (`fdt-run:InTrain`, ADR-016), which needs code rather
+than a query. The offers on the chain are corrected to `executeContainer`, and `rav-oost` and
+`hap-oost` gain the Docker mechanism they must have to be on it. This resolves finding 31 in
+the Turtle's disfavour: the hop-1 descriptor was right.
+
+**D — decided: a new, minimal M1 fixture set**, rather than retrofitting the time-to-groin
+story, which is the M3 discovery chain and was never the M1 scenario. `ex:station/ut` gains a
+catalogue with one SPARQL-reachable gene–disease dataset, an offer that auto-approves, a
+declared output schema, a small test graph, a P1 single-visit plan in JSON-LD *and* Turtle,
+and one k<5 result for PEP 3's rejection path.
+
+**E — decided: real payload bytes, with every digest computed by a script.** The payloads live
+under `examples/payloads/`; a fixture-build script computes each digest and `make check`
+re-verifies that every declared digest still equals the hash of its bytes, so a stale digest
+cannot survive a commit. The wrong-digest fixture WP-1.2 needs is generated from real bytes
+rather than typed.
+
+**Landed** in `fdt-commons` v0.8.0 (A and E) and v0.9.0 (D), each through the change protocol,
+`make check` green after both; findings 34–37. What the gate now checks that it could not
+before: that every hop of the time-to-groin chain can actually run (`tests/probes/chain_probe.py`),
+that every declared digest is the hash of bytes in the repository, and that the M1 descriptor,
+events and result envelopes are what the train's own payload produces on the committed test
+graph.
+
+**B and C remain open**, and follow the decisions already recorded in Q12 and Q13. B is now the
+last thing between the contracts and WP-1.3: `agr-m1-01` is derivable from its own offer and
+request, so an evaluator has a target it can reach, but `AgreementShape` still validates form
+rather than derivation (finding 28) and carries neither the evidence block nor the validity
+window Q12 decided on. Every change goes through the change protocol: `fdt-commons` first,
+`VERSION` bump, `FINDINGS.md` line, validators green.
