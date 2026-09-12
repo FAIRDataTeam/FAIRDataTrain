@@ -92,11 +92,19 @@ test:  ## run each component's tests, lint and types, in its own environment
 	  && npm run --silent generate \
 	  && npm run --silent typecheck
 
+# The scenarios need every component in ONE environment: they run the real Handler against
+# the real station, which is the only way either can be shown to agree with the other.
+E2E := $(ROOT)/.venv-e2e
+
 .PHONY: e2e
-e2e:  ## run the milestone scenarios against docker-composed stations
-	@echo "Not implemented yet — the M1 scenario lands with WP-1.5."
-	@echo "  M1 one visit · M2 fan-out and governance · M3 multi-hop · M4 composition"
-	@exit 1
+e2e:  ## run the milestone scenarios with the real components against each other
+	@echo "── end-to-end ───────────────────────────────────────────────"
+	@uv venv --quiet --allow-existing --python 3.12 $(E2E)
+	@uv pip install --quiet --python $(E2E)/bin/python pytest \
+	  -e $(ROOT)/FAIRDataStation-py -e $(ROOT)/FAIRDataTrainHandler
+	@$(E2E)/bin/pytest -q $(ROOT)/tests/e2e
+	@echo
+	@echo "  M1 one visit ✓ · M2 fan-out and governance · M3 multi-hop · M4 composition"
 
 .PHONY: up
 up:  ## bring up the demo stations

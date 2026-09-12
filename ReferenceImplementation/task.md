@@ -8,12 +8,13 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** WP-1.5 (the Handler core and CLI) — the last work package of M1. A train already visits a station end to end over HTTP; what is missing is the Handler that drives it from a plan and prints the event stream and the envelope.
+**Next:** **M5 — the testbed** (below). M1 is complete: `fdt-handler run plan.jsonld` drives a train to a station and back, and `make e2e` runs the two real components against each other. The testbed re-orders what follows — a Train Depot, a metadata registry, several stations, a Handler, and UIs for all of them (**ADR-029**).
 
 | | | |
 |---|---|---|
 | **M0** Foundations | ✅ done | 12 Sep 2026 |
-| **M1** One visit | 🟨 4 of 5 — WP-1.1, 1.2, 1.3, 1.4 done; 1.5 remains | |
+| **M1** One visit | ✅ done | 12 Sep 2026 |
+| **M5** Testbed (new — ADR-029) | ⬜ next | |
 | **M2** Fan-out and governance | ⬜ not started | |
 | **M3** Multi-hop | ⬜ not started | |
 | **M4** Hardening and alignment | ⬜ not started | |
@@ -117,12 +118,61 @@ the fixture side; the code has not started.
       so the duty was dead code and a disclosure decision was reported as a malformed result.
       27 mutations, 0 survivors — on the second pass, after the first harness turned out to be
       a check that could not fail.
-- [ ] **WP-1.5 — Handler core v0 (library + CLI)** · 1.1 · M
-      *Acceptance: the M1 scenario driven by `fdt-handler run plan.jsonld`.* **Next.** Fixtures
-      ready — `examples/plan-gene-disease-single.jsonld`, asserted isomorphic to its Turtle —
-      and a station that now answers the whole protocol, so the CLI has something real to drive.
+- [x] **WP-1.5 — Handler core v0 (library + CLI)** · 1.1 · M
+      *Acceptance: the M1 scenario driven by `fdt-handler run plan.jsonld`.* **Met**, and run
+      three ways: in the Handler's own tests against a fake station replaying the fixtures, in
+      `make e2e` with the real station over ASGI, and over HTTP under uvicorn driven by the
+      command itself. The Handler resolves what the plan names, validates the plan *in the
+      context of what it resolved* (the shapes constrain classes a plan file does not contain),
+      builds the one document it authors and checks it against the descriptor schema before
+      sending, follows the stream, and assembles a run state whose visits are the envelopes the
+      station returned. Two contract gaps had to be closed first: an envelope could not say a
+      visit was rejected before it ran (**finding 47**), so a Handler could describe a
+      successful run and not a failed one; and `fdt-run:DropForRemainingRounds` is admitted by
+      no shape (**finding 48**).
 
 ---
+
+## M5 — Testbed
+
+A running ecosystem, with user interfaces: **one Train Depot** holding several trains, **one
+metadata registry** indexing stations and trains, **a few FAIR Data Stations**, and **one Train
+Handler**. Decided 12 September 2026; **ADR-029** records what changed and why — the Garage
+becomes the Depot down to the ontology, and the Directory becomes an FDP-Index-shaped registry
+rather than a component of its own.
+
+It re-orders the roadmap rather than adding to the end of it: WP-3.4 is re-scoped and pulled
+forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exist earlier.
+
+- [ ] **WP-5.1 — FDT-O v3: the Depot rename, and Train made abstract** · 0.2 · M
+      `fdt-o:GarageCatalog` → `fdt-o:DepotCatalog`, `fdt-p:trainGarage` → `fdt-p:trainDepot`;
+      `fdt-o:Train` becomes abstract (only concrete subclasses have instances) and stops being
+      a subclass of `odrl:Asset` — a train *plays* that role as the target of a policy.
+      Breaking, and cheapest now: Q1 has not published the IRIs. Touches every shape, fixture
+      and generated model, and PR #1 (Q5). *Acceptance: `make check` green on the rebound
+      contracts; the M1 scenario still runs unchanged.*
+- [ ] **WP-5.2 — Train Depot v0** · 5.1 · L
+      The authority for a train: payload bytes, `fdt-o:artifactDigest`, declared parameters and
+      output, the owner's offer over the train, and the owner's JWKS (ADR-028). Populated with
+      several trains. *Acceptance: a station's PEP 1 resolves a train against the Depot over
+      HTTP and rejects a wrong digest; the Handler builds a descriptor from it.*
+- [ ] **WP-5.3 — Metadata registry v0** · 5.2 · M
+      Harvests and indexes what Depots and Stations publish, FDP-Index-shaped. **Not a trust
+      anchor** — membership is proven by the credential in the token, not by an index entry.
+      Shows harvest time rather than implying currency. *Acceptance: a Handler resolves a plan's
+      stations and trains from the registry instead of the fixture catalogue.*
+- [ ] **WP-5.4 — Several stations, configured and running** · 1.4 · M
+      More than one station with real data sources, in at least two networks, so per-network
+      terms (ADR-017) are visible rather than asserted. *Acceptance: the same train visits two
+      stations and gets different agreements.*
+- [ ] **WP-5.5 — Consoles for the testbed** · 2.7, 5.2, 5.3 · L
+      UIs for the Depot, the registry, the stations and the Handler. Scope and layout are open;
+      the three role-based console apps of D3 already exist as a plan, and the Depot and the
+      registry need their own views. *Acceptance: the M1 scenario watched end to end in a
+      browser — the itinerary, the checkpoints, the justifications, the envelope.*
+
+Open before this can be scoped properly: **`fdt-run:targetQuery` has no grammar** (sweep G), and
+it is what a plan uses to select stations from a registry.
 
 ## M2 — Fan-out and governance
 
@@ -205,6 +255,7 @@ Decisions belong to Luiz (plan §7); code takes the conservative default in
 | **Q14-B** | agreement derivation and `AgreementShape` | WP-1.3, WP-2.4 |
 | **Q14-C** | the commercial request and where `consumerType` comes from | WP-1.3's second clause |
 | **Q15** | does a zero cell violate a k-anonymity duty | nothing; WP-1.4 runs under the default |
+| **Q16** | the `fdt-run:targetQuery` grammar (sweep G) | WP-5.3's scope, WP-3.1, WP-3.2 |
 | **Q5** | merge FDT-O PR #1 | WP-0.2's close-out |
 | **Q1** | publish the contracts at their `w3id.org` IRIs | WP-0.2, WP-4.4 |
 | **Q6** | repository visibility | WP-4.4 |
