@@ -167,3 +167,112 @@ do the fixtures it names exist, are they internally consistent, and do they exer
 the criterion claims? Record what is missing and fix the fixtures under the change protocol
 *first*. Doing this at the point where the tests fail instead means the pressure is on to
 bend the code to a broken fixture.
+
+### Q11 — Can an ODRL policy target part of a dataset?
+**Blocks:** WP-1.3's evaluator scope and WP-2.5's catalogue.
+
+Stated 12 Sep 2026: *the station has ODRL policies for each dataset (or even to parts of
+datasets).* The contracts do not support the parenthesis. `odrl:target` on an offer is a whole
+`fdt-o:HostedDataset`, `DatasetShape` requires at least one `odrl:hasPolicy` per dataset, and
+the catalogue shapes have no notion of a dataset part.
+
+It is a real requirement — a controller who will release aggregate outcomes but not free-text
+notes, or 2019–2024 but not 2025, needs somewhere to say so — and there are three ways to give
+it to them, which are not equivalent:
+
+| | What it means | Cost |
+|---|---|---|
+| **Distribution as target** | A `dcat:Distribution` per releasable view, each with its own offer. DSP-friendly: distributions are already first-class and per-mechanism. | The controller must model the views up front; combinations multiply. |
+| **Constraint on the permission** | One offer per dataset; the part is expressed as a constraint (`fdt-p:permittedFields`, a temporal window). Nothing new in the catalogue. | It is PEP 3's job to enforce, so the *catalogue* no longer shows what is actually available — S6's "who can reach it" becomes misleading. |
+| **A `fdt-o:DatasetPart` subclass** | Explicit parts with their own IRIs, controllers and offers. | New ontology terms; every catalogue consumer must understand them. |
+
+**Default in force:** whole datasets only, as the contracts have it. Where a controller needs
+a narrower grant, express it as a **constraint on the permission** and enforce it at PEP 3 —
+the mechanism that already exists — and record here that the catalogue does not yet advertise
+it. Do not introduce dataset parts into the ontology before deciding which of the three this
+is, because all three are visible in `StationCatalog` and a wrong choice is expensive to undo.
+
+### Q12 — What does an agreement have to contain to be auditable?
+**Blocks:** WP-1.3; supersedes the open half of Q9.
+
+Requirement, 12 Sep 2026: the agreement is encoded in ODRL, carries **all the agreed access
+terms**, is **immutable for later audits**, and is **accessible to the station and the train
+owner**. Findings 23–25 say what is missing to meet it. Three decisions follow:
+
+1. **Granted terms versus evidence** (finding 24). An agreement holds the granted permissions
+   with their *usage* constraints, which PEP 2 and PEP 3 re-check on every job, **and** the
+   *eligibility* facts established once at negotiation, recorded as evidence rather than as
+   re-evaluatable constraints — so access cannot lapse silently and withdrawal has to be an
+   explicit, audited revocation. **Default: adopt this split.**
+2. **Pinning** (finding 25). `derivedFromOffer` / `derivedFromRequest` point at mutable
+   documents, so the derivation is not reconstructible. **Default: carry a `sha256:` digest
+   beside each, and the station retains the documents** — a controller withdrawing an offer
+   must not erase the record of agreements already made under it.
+3. **The train** (finding 23). The agreement does not name the executable it was concluded
+   for. **Default: `fdt-p:train` and the payload digest become first-class properties of the
+   Agreement**, beside `derivedFromOffer` / `derivedFromRequest`.
+
+Still open and genuinely undecided: **immutability against whom?** A digest makes tampering
+detectable by anyone holding the original. It does not make it *impossible* for the station,
+which is both a party to the agreement and the keeper of the record. If the threat model
+includes a station rewriting its own history, that needs an append-only log or
+counter-signature by the train owner, and that is an ADR, not a shape. `AgreementShape` can
+express the digests today; it cannot express custody.
+
+### Q13 — Authorization modes: when may a machine decide, and what is recorded when a human does?
+**Blocks:** WP-1.3 (the PDP's output), WP-2.4 (approval and the Gateway), WP-2.7 (S3, G4).
+
+Stated 12 Sep 2026: authorisation is sometimes allowed to happen automatically; in other
+situations **regulation does not permit an automated authorisation**, and the system must
+then present the case to a human — the access request, the access conditions, and a summary
+or suggestion of how the request matches or fails to match — so the decision has a basis.
+
+The contracts have one boolean for this, `fdt-p:requiresManualApproval` on the offer, set by
+the controller (finding 26). It cannot express a rule the controller is not allowed to relax,
+and nothing records what the human was shown (finding 27).
+
+**Four decisions.**
+
+**1. Where does "a machine may not decide this" live?** Not on the offer: the same controller's
+offer may be freely automatable in one network and not in another. Candidates are the network
+(ADR-017 governs per network), the hosted dataset (its legal regime), or the station's
+jurisdiction. **Default in force:** treat it as a property of the **network membership**, since
+that is where trusted issuers and governance already sit — and make the station refuse to
+auto-approve whenever *either* the network rule or the controller's preference demands a human.
+The two must remain separately visible; the agreement records which applied.
+
+**2. Which decisions may be automatic?** "Automated authorisation" is not one act. A station
+can automatically **grant**, automatically **refuse**, or automatically **grant with
+redactions and duties**. A regime that forbids automated granting may permit automated
+refusal, or may not — an automated refusal is still an adverse decision taken by a machine.
+**Default:** the flag governs **granting** only; refusals may be automatic, and every refusal
+already carries a stated reason and is appealable by resubmission. Flagged because it is a
+legal question, not a technical one, and the conservative reading may be the opposite.
+
+**3. What must be recorded when a human decided?** Beyond `approval.controller` and
+`approval.expiresAt`, which exist:
+
+- the **mode** that applied — automatic-permitted, human-required-by-regulation, or
+  human-by-controller-preference — and the rule that imposed it;
+- **who** decided, and under what authority (a delegate, a data access committee, a `[METC ref.]`);
+- **what they were shown** — the pinned match summary and the system's suggestion (finding 27);
+- whether they **followed or overrode** the suggestion, and if overrode, their stated reason.
+
+**4. May a human override the system?** This one needs a real answer, because "the system
+suggests, the human decides" is ambiguous about whether the human can decide *against* a
+hard rule. A principled cut, offered as the default:
+
+- **A human may supply evidence the machine lacks.** Most refusals in practice will be
+  unevidenced eligibility facts — the station cannot verify a legal basis or a consumer type,
+  so it fails closed (`agreement-derivation.md` §5). An approver who has seen the METC letter
+  is supplying evidence, not overriding a rule, and that is the ordinary case.
+- **A human may not override a prohibition that fired.** If the controller prohibited
+  `odrl:sell` and the request asks to sell, no delegate may approve it: the prohibition is the
+  controller's own instruction about their own data, and an approver acting on their behalf
+  cannot countermand it.
+
+Under that cut an "override" is always either *new evidence* (recorded as evidence, with its
+source) or *forbidden*. Nothing is ever silently waved through, and the audit distinguishes
+the two. **Default: adopt it**, and record the supplied evidence and its source on the
+agreement.
+
