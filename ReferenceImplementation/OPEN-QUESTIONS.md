@@ -192,34 +192,42 @@ the mechanism that already exists — and record here that the catalogue does no
 it. Do not introduce dataset parts into the ontology before deciding which of the three this
 is, because all three are visible in `StationCatalog` and a wrong choice is expensive to undo.
 
-### Q12 — What does an agreement have to contain to be auditable?
-**Blocks:** WP-1.3; supersedes the open half of Q9.
+### Q12 — What an agreement contains — **ANSWERED 12 Sep 2026**
+**Was blocking:** WP-1.3 and finding 28. Now decided; the contract work follows.
 
 Requirement, 12 Sep 2026: the agreement is encoded in ODRL, carries **all the agreed access
 terms**, is **immutable for later audits**, and is **accessible to the station and the train
 owner**. Findings 23–25 say what is missing to meet it. Three decisions follow:
 
-1. **Granted terms versus evidence** (finding 24). An agreement holds the granted permissions
-   with their *usage* constraints, which PEP 2 and PEP 3 re-check on every job, **and** the
-   *eligibility* facts established once at negotiation, recorded as evidence rather than as
-   re-evaluatable constraints — so access cannot lapse silently and withdrawal has to be an
-   explicit, audited revocation. **Default: adopt this split.**
-2. **Pinning** (finding 25). `derivedFromOffer` / `derivedFromRequest` point at mutable
-   documents, so the derivation is not reconstructible. **Default: carry a `sha256:` digest
-   beside each, and the station retains the documents** — a controller withdrawing an offer
-   must not erase the record of agreements already made under it.
-3. **The train** (finding 23). The agreement does not name the executable it was concluded
-   for. **Default: `fdt-p:train` and the payload digest become first-class properties of the
-   Agreement**, beside `derivedFromOffer` / `derivedFromRequest`.
+1. **Granted terms versus evidence** (finding 24). **DECIDED: adopt the split.** An agreement
+   holds the granted permissions with their *usage* constraints — purpose, onward state class,
+   k-anonymity, retention **and the validity window** — which PEP 2 and PEP 3 re-check on every
+   job; **and** the *eligibility* facts established once at negotiation (legal basis, consumer
+   type, network, processing location) with the identity claims they came from, recorded as
+   **evidence**, never re-evaluated. Access cannot lapse silently; withdrawal is an explicit,
+   audited revocation. Carrying the validity window as a granted term also settles finding 30 —
+   the agreement can finally compute its own expiry.
+2. **Pinning** (finding 25). **DECIDED: digests plus two-party retention.** A `sha256:` digest
+   beside `derivedFromOffer`, `derivedFromRequest` and the train payload, **and** the Train
+   Handler fetches and keeps the agreement at `negotiation.active`, with its digest on the
+   event. Station-only retention was rejected: the station is both the scribe and a party, so
+   it is the custody problem restated rather than the fix. With both parties holding a pinned
+   copy, neither can rewrite history unnoticed — and this is a protocol rule available now, not
+   an ADR.
+3. **The train** (finding 23). **DECIDED:** `fdt-p:train` and the payload digest become
+   first-class properties of the Agreement, beside `derivedFromOffer` / `derivedFromRequest`.
+   Without the digest pinned *in the agreement*, a controller hand-approves `time-to-groin 0.4`,
+   the Garage publishes 0.5, and a retry reuses the agreement while PEP 1 checks the digest
+   against the Garage as it is today — different code runs under a human's approval.
 
-Still open and genuinely undecided: **immutability against whom?** A digest makes tampering
+**Still open: immutability against whom?** A digest makes tampering
 detectable by anyone holding the original. It does not make it *impossible* for the station,
 which is both a party to the agreement and the keeper of the record. If the threat model
 includes a station rewriting its own history, that needs an append-only log or
 counter-signature by the train owner, and that is an ADR, not a shape. `AgreementShape` can
 express the digests today; it cannot express custody.
 
-### Q13 — Authorization modes: when may a machine decide, and what is recorded when a human does?
+### Q13 — Authorization modes — **PARTLY ANSWERED 12 Sep 2026**
 **Blocks:** WP-1.3 (the PDP's output), WP-2.4 (approval and the Gateway), WP-2.7 (S3, G4).
 
 Stated 12 Sep 2026: authorisation is sometimes allowed to happen automatically; in other
@@ -233,13 +241,14 @@ and nothing records what the human was shown (finding 27).
 
 **Four decisions.**
 
-**1. Where does "a machine may not decide this" live?** Not on the offer: the same controller's
-offer may be freely automatable in one network and not in another. Candidates are the network
-(ADR-017 governs per network), the hosted dataset (its legal regime), or the station's
-jurisdiction. **Default in force:** treat it as a property of the **network membership**, since
-that is where trusted issuers and governance already sit — and make the station refuse to
-auto-approve whenever *either* the network rule or the controller's preference demands a human.
-The two must remain separately visible; the agreement records which applied.
+**1. Where does "a machine may not decide this" live?** **DECIDED: on the network membership.**
+That is where trusted issuers and governance already sit (ADR-017), and it lets a network
+authority impose "no automated authorisation here" across every station in the network, while
+the same controller's offer stays freely automatable in another network — which is how
+regulation actually varies. It is **not** on the offer, because the controller can edit that.
+The station refuses to auto-approve whenever *either* the network rule or the controller's
+`requiresManualApproval` preference demands a human; the two stay separately visible, and the
+agreement records which one applied (finding 26).
 
 **2. Which decisions may be automatic?** "Automated authorisation" is not one act. A station
 can automatically **grant**, automatically **refuse**, or automatically **grant with
@@ -258,9 +267,7 @@ legal question, not a technical one, and the conservative reading may be the opp
 - **what they were shown** — the pinned match summary and the system's suggestion (finding 27);
 - whether they **followed or overrode** the suggestion, and if overrode, their stated reason.
 
-**4. May a human override the system?** This one needs a real answer, because "the system
-suggests, the human decides" is ambiguous about whether the human can decide *against* a
-hard rule. A principled cut, offered as the default:
+**4. May a human override the system? DECIDED: evidence yes, prohibition no.**
 
 - **A human may supply evidence the machine lacks.** Most refusals in practice will be
   unevidenced eligibility facts — the station cannot verify a legal basis or a consumer type,

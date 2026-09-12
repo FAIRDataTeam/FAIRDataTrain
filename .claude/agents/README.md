@@ -47,6 +47,17 @@ not exist:
 > output. A check that cannot fail is not evidence. Never buy a green run by weakening a
 > check. If something could not be made to work, say so plainly and say why.
 
+**The concrete form this takes here.** A SHACL test whose focus node does not exist reports
+`conforms` over a graph it never looked at. It has happened four times in this project, most
+recently in implementation code: a station that bound the *wrong namespace*, so every term it
+emitted was unrecognisable, still passed all three of its self-description conformance tests.
+
+`FAIRDataStation-py/tests/test_contract_terms.py` is the pattern to copy into every component:
+assert the focus node exists before trusting a verdict; compare the IRIs the component emits
+against the IRIs the ontology declares; derive the expected namespace from the ontology rather
+than from a literal in the test; and carry a negative control that proves the new check catches
+what SHACL misses (`fdt-commons/FINDINGS.md` finding 33).
+
 ## Benchmark
 
 The tiers above were set by running real M0/M1 deliverables — pydantic model generation from
