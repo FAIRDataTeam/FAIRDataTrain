@@ -17,14 +17,14 @@ make check          # the gate: every contract validator in fdt-commons and FDT-
 
 | Submodule | What it is | Status |
 |---|---|---|
-| [`fdt-commons`](https://github.com/FAIRDataTeam/fdt-commons) | **the contracts**: vocabularies, SHACL shapes, JSON Schemas, JSON-LD contexts, the visit protocol, the fixtures | v0.5 — validated |
+| [`fdt-commons`](https://github.com/FAIRDataTeam/fdt-commons) | **the contracts**: vocabularies, SHACL shapes, JSON Schemas, JSON-LD contexts, the visit protocol, the fixtures | v0.9.0 — validated |
 | [`FDT-O`](https://github.com/FAIRDataTeam/FDT-O) | the ontology: what a train, payload, hosted dataset, catalogue, controller and station type *are* | v2.0.0 on branch `fdt-o-v2` ([PR #1](https://github.com/FAIRDataTeam/FDT-O/pull/1)) |
-| [`FAIRDataStation-py`](https://github.com/FAIRDataTeam/FAIRDataStation-py) | the station: PEP 1–3, agreements, metadata, adapters | skeleton |
+| [`FAIRDataStation-py`](https://github.com/FAIRDataTeam/FAIRDataStation-py) | the station: PEP 1–3, agreements, metadata, adapters | WP-0.4 done — `GET /` self-description, three profiles, 75 tests |
 | [`FAIRDataTrainHandler`](https://github.com/FAIRDataTeam/FAIRDataTrainHandler) | the Handler: run model, orchestration, conditions, failure policy | skeleton |
 | [`IndividualGateway`](https://github.com/FAIRDataTeam/IndividualGateway) | the data controller's agent across stations | skeleton |
 | [`StationDirectory`](https://github.com/FAIRDataTeam/StationDirectory) | federation catalogue of station self-descriptions | skeleton |
 | [`TrainGarage`](https://github.com/FAIRDataTeam/TrainGarage) | catalogue of train offers with payload digests | skeleton |
-| [`FDTConsole`](https://github.com/FAIRDataTeam/FDTConsole) | one front-end, three role-based apps | skeleton |
+| [`FDTConsole`](https://github.com/FAIRDataTeam/FDTConsole) | one front-end, three role-based apps | design system and generated contract types; no screens yet |
 
 The Java prototypes — `FAIRDataStation`, `TrainHandler`, `TrainHandler-server`,
 `TrainHandler-client`, `TrainOrchestrator` — are the earlier lineage and are not evolved
@@ -88,15 +88,40 @@ test. The order and the exit criteria are fixed; durations are not.
 | **M3** Multi-hop | a two-phase plan selecting stations by condition; the time-to-groin chain through a linkage station with per-hop agreements, a pending approval and a pruned branch; the itinerary map live and in replay |
 | **M4** Hardening | composition with a rejected phase; PROV-O run records; DSP state mapping asserted; three deployment profiles from one image; a security review of PEP 1 and the Docker sandbox; conformance material |
 
-### Where M0 stands
+### Where the work stands
 
-- **WP-0.1 Metaproject and CI** — done. `make check` is green; CI runs it on a clean clone.
-- **WP-0.2 FDT-O v2 merge** — done, pending review of
-  [PR #1](https://github.com/FAIRDataTeam/FDT-O/pull/1). See Q5.
-- **WP-0.3 Generated models** — TypeScript types generate from the OpenAPI documents
-  (`FDTConsole`); the pydantic side and the `fdt_commons` Python package are next.
-- **WP-0.4 Station skeleton** — package layout in place; the FastAPI app and the
-  self-description endpoint are next.
+This section is the progress record. The roadmap it tracks — milestones, the 25 work packages
+and their acceptance criteria — is §4 and §5 of `fdt-implementation-plan.md` in the
+architecture folder, which is normative and lives outside this repository. Decisions and their
+conservative defaults are in [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md); contract defects and
+what closed them are in `fdt-commons/FINDINGS.md`, numbered and referred to by number.
+
+**M0 — Foundations: done.**
+
+| | |
+|---|---|
+| WP-0.1 Metaproject and CI | done — `make check` green on a clean clone; CI runs it |
+| WP-0.2 FDT-O v2 merge | done, pending [PR #1](https://github.com/FAIRDataTeam/FDT-O/pull/1) (Q5). Terms stay at `https://w3id.org/fdt/fdt-o#` (D2); shapes reference 42 terms, ontology declares 71, undeclared 0, asserted on every run |
+| WP-0.3 Generated models | done — pydantic models from the JSON Schemas and TypeScript types from the OpenAPI documents, reproducibly and offline; `generated/` is git-ignored. **Finding 32**: the models are a typed view, not enforcement — validate against the schema |
+| WP-0.4 Station skeleton | done — `GET /` self-description served for all three profiles; enabled adapters are the sole source of `supportsInteractionMechanism` (Principle 1). **Finding 33**: a component binding the wrong namespace still passed its SHACL tests |
+
+**M1 — One visit: not started; its fixtures now exist.** The acceptance-criteria sweep
+([Q10](OPEN-QUESTIONS.md), `docs/reviews/2026-09-12-acceptance-criteria-sweep.md`) found all
+five M1 criteria unrunnable. Decisions A, D and E ([Q14](OPEN-QUESTIONS.md)) fixed the fixture
+side in `fdt-commons` v0.8.0 and v0.9.0.
+
+| | |
+|---|---|
+| WP-1.1 Visit protocol server | **ready to start.** Its descriptor conforms to `RequestShape` (finding 31 closed) and the wrong-digest fixture its PEP 1 clause needs exists |
+| WP-1.2 PEP 1 and payload validation | fixtures ready — every payload has real bytes and a true digest (finding 36). Still needs an invalid-request fixture, and the criterion says "refused" where ADR-026 says Rejected |
+| WP-1.3 Negotiation on arrival | **blocked on decision B** — `AgreementShape` validates form, never derivation (finding 28), and carries neither the evidence block nor the validity window Q12 decided. `agr-m1-01` is derivable from its own inputs, so the target exists |
+| WP-1.4 Orchestrator, PEP 2/3, SPARQL adapter | fixtures ready — a SPARQL-reachable dataset, an auto-approving offer, a test graph, and a released and a k-violating result computed from the train's own payload (finding 37) |
+| WP-1.5 Handler core v0 | fixtures ready — the P1 plan exists in Turtle and JSON-LD, asserted isomorphic |
+
+**M2–M4** are untouched. The sweep lists what each of their criteria still needs, as decisions
+F–L; none blocks M1.
+
+**Next:** WP-1.1, and decision B before WP-1.3.
 
 ## Documentation
 
