@@ -365,3 +365,32 @@ request, so an evaluator has a target it can reach, but `AgreementShape` still v
 rather than derivation (finding 28) and carries neither the evidence block nor the validity
 window Q12 decided on. Every change goes through the change protocol: `fdt-commons` first,
 `VERSION` bump, `FINDINGS.md` line, validators green.
+
+---
+
+### Q15 — Does a zero cell violate a k-anonymity duty? — **OPEN; conservative default taken**
+
+**The question.** An agreement carries `odrl:aggregate` with `fdt-p:kAnonymity gteq 5`. A
+released cell counts **0** subjects. Does that violate the duty?
+
+**Why it needs deciding.** It is the boundary of the one rule that stands between a station's
+data and a data consumer, and it is not a technical detail: a station that suppresses zeros
+tells a consumer less than it could, and one that releases them tells the consumer *this station
+has nobody with this property* — which is a fact about the station's population, not about a
+person, but is a disclosure all the same. A run reaching six stations, five of which release a
+zero, discloses a distribution.
+
+**What the code does now.** A count of 0 passes; a count of 1 to k−1 rejects the result. That is
+the disclosure-control convention: what is suppressed is a small non-empty group, because from a
+cell of three and one auxiliary fact an individual can be singled out, and from a zero nobody
+can. `ZERO_IS_NOT_A_DISCLOSURE` in `fdt-commons/tools/inspection.py` and in the station's
+`policy/pep3.py`; `examples/invalid/inspection/zero-cell-is-not-a-disclosure.json` is the case,
+and it is the file that changes if the decision goes the other way.
+
+**The alternative**, if you want it: treat any count below k as a violation, zero included. It
+costs little here — no fixture releases a zero — and it is the stricter reading of "at least k
+subjects behind every released cell". The third option, **suppress the cell rather than reject
+the result**, is the `redacted` outcome ADR-026 already has a word for, and no fixture exercises
+it; it would need its own decision about what a redacted envelope tells the consumer.
+
+**Blocks nothing.** WP-1.4 runs under the default and is marked with the question id.

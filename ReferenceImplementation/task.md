@@ -8,12 +8,12 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** WP-1.4 (PEP 2, the SPARQL adapter, PEP 3), then WP-1.5 (the Handler CLI) — the two that stand between here and a train visiting a station end to end.
+**Next:** WP-1.5 (the Handler core and CLI) — the last work package of M1. A train already visits a station end to end over HTTP; what is missing is the Handler that drives it from a plan and prints the event stream and the envelope.
 
 | | | |
 |---|---|---|
 | **M0** Foundations | ✅ done | 12 Sep 2026 |
-| **M1** One visit | 🟨 3 of 5 — WP-1.1, 1.2, 1.3 done; 1.4 and 1.5 remain | |
+| **M1** One visit | 🟨 4 of 5 — WP-1.1, 1.2, 1.3, 1.4 done; 1.5 remains | |
 | **M2** Fan-out and governance | ⬜ not started | |
 | **M3** Multi-hop | ⬜ not started | |
 | **M4** Hardening and alignment | ⬜ not started | |
@@ -105,15 +105,22 @@ the fixture side; the code has not started.
       do have (`odrl:sell`) and on an unevidenced eligibility fact; the *commercial* request the
       criterion names still does not exist (**Q14-C**, Q9/finding 20), so that one clause waits
       on a fixture, not on code.
-- [ ] **WP-1.4 — Orchestrator, PEP 2, SPARQL adapter, PEP 3** · 1.3 · L
+- [x] **WP-1.4 — Orchestrator, PEP 2, SPARQL adapter, PEP 3** · 1.3 · L
       *Acceptance: the M1 scenario; a result violating k triggers `visit.rejected` at PEP 3 with
-      a justification.* **Next.** Fixtures ready, including the adversarial one: same train,
-      same agreement, one parameter different, and PEP 3 must reach opposite outcomes. An active
-      agreement now exists for PEP 2 to check, and its duties — the k-anonymity threshold and
-      the retention period — are the rules PEP 3 enforces.
+      a justification.* **Both met**, in tests and live under uvicorn: the M1 visit produces the
+      published eight-event stream and the published envelope, and the adversarial visit — one
+      parameter different, nothing else — is rejected at PEP 3 naming the agreement's
+      `odrl:aggregate` duty. PEP 2 hashes the payload bytes immediately before the adapter gets
+      them and compares with the digest the agreement pinned, which closes PEP 1's open item.
+      Three contract gaps had to be closed first (`fdt-commons` v0.13–v0.15, findings 42–46);
+      the largest was that **the k threshold lived in two places and the schema was winning**,
+      so the duty was dead code and a disclosure decision was reported as a malformed result.
+      27 mutations, 0 survivors — on the second pass, after the first harness turned out to be
+      a check that could not fail.
 - [ ] **WP-1.5 — Handler core v0 (library + CLI)** · 1.1 · M
-      *Acceptance: the M1 scenario driven by `fdt-handler run plan.jsonld`.* Fixtures ready —
-      `examples/plan-gene-disease-single.jsonld`, asserted isomorphic to its Turtle.
+      *Acceptance: the M1 scenario driven by `fdt-handler run plan.jsonld`.* **Next.** Fixtures
+      ready — `examples/plan-gene-disease-single.jsonld`, asserted isomorphic to its Turtle —
+      and a station that now answers the whole protocol, so the CLI has something real to drive.
 
 ---
 
@@ -197,6 +204,7 @@ Decisions belong to Luiz (plan §7); code takes the conservative default in
 |---|---|---|
 | **Q14-B** | agreement derivation and `AgreementShape` | WP-1.3, WP-2.4 |
 | **Q14-C** | the commercial request and where `consumerType` comes from | WP-1.3's second clause |
+| **Q15** | does a zero cell violate a k-anonymity duty | nothing; WP-1.4 runs under the default |
 | **Q5** | merge FDT-O PR #1 | WP-0.2's close-out |
 | **Q1** | publish the contracts at their `w3id.org` IRIs | WP-0.2, WP-4.4 |
 | **Q6** | repository visibility | WP-4.4 |
