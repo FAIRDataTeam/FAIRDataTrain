@@ -8,12 +8,12 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** WP-1.2 (PEP 1's remaining checks), and decision Q14-B before WP-1.3.
+**Next:** decision **Q14-B**, which is now the only thing between the contracts and WP-1.3.
 
 | | | |
 |---|---|---|
 | **M0** Foundations | ✅ done | 12 Sep 2026 |
-| **M1** One visit | 🟨 1 of 5 — WP-1.1 done; WP-1.3 blocked on Q14-B | |
+| **M1** One visit | 🟨 2 of 5 — WP-1.1, 1.2 done; WP-1.3 blocked on Q14-B | |
 | **M2** Fan-out and governance | ⬜ not started | |
 | **M3** Multi-hop | ⬜ not started | |
 | **M4** Hardening and alignment | ⬜ not started | |
@@ -87,14 +87,14 @@ the fixture side; the code has not started.
       interface and that is visible in the stream. 104 tests; six mutations, five caught at
       once, and the two survivors bought a bounded event stream and a test for the event log's
       own validation.
-- [ ] **WP-1.2 — PEP 1 and payload validation** · 1.1 · M
+- [x] **WP-1.2 — PEP 1 and payload validation** · 1.1 · M
       *Acceptance: the invalid fixtures concerning requests and trains are refused with the
-      shape's `sh:message` in the event justification.* **Next.** WP-1.1 left three checks
-      named in `fdt_station.protocol.pep1.MISSING_IN_WP_1_1`: the bearer token against the
-      network's trusted issuers, the ODRL request against `RequestShape`, and the payload
-      against the mechanism's `PayloadShape`. Still missing on the contract side: an invalid
-      **request** fixture (there is none), and the criterion says "refused" where ADR-026 says
-      **Rejected** — PEP 1 rejects, controllers refuse.
+      shape's `sh:message` in the event justification.* **Met**, with the criterion's word
+      corrected: ADR-026 calls this **Rejected**; a controller refuses. The three request
+      counter-examples it needed did not exist and now do (finding 38); each is converted to
+      the serialisation a descriptor carries and rejected in the shape's own words. Token
+      verification is per network and checks signatures (ADR-017). Findings 39, 40, 41 came out
+      of building it. Eight mutations, all caught.
 - [ ] **WP-1.3 — Negotiation on arrival (auto-approval path)** · 1.2 · L
       *Acceptance: the fixture offer and request produce the target agreement; the commercial
       request is Refused with the prohibition named.* **Blocked on Q14-B**, and the second clause
