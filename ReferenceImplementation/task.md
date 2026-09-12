@@ -8,12 +8,12 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** WP-1.1, and decision Q14-B before WP-1.3.
+**Next:** WP-1.2 (PEP 1's remaining checks), and decision Q14-B before WP-1.3.
 
 | | | |
 |---|---|---|
 | **M0** Foundations | ✅ done | 12 Sep 2026 |
-| **M1** One visit | ⬜ not started — fixtures ready, WP-1.3 blocked on Q14-B | |
+| **M1** One visit | 🟨 1 of 5 — WP-1.1 done; WP-1.3 blocked on Q14-B | |
 | **M2** Fan-out and governance | ⬜ not started | |
 | **M3** Multi-hop | ⬜ not started | |
 | **M4** Hardening and alignment | ⬜ not started | |
@@ -78,16 +78,23 @@ the fixture side; the code has not started.
 
 ### Work packages
 
-- [ ] **WP-1.1 — Visit protocol server (Station API)** · 0.4 · M
+- [x] **WP-1.1 — Visit protocol server (Station API)** · 0.4 · M
       *Acceptance: the fixture descriptor is accepted and produces an event stream shaped like
       the fixture; a descriptor with a wrong digest is rejected at PEP 1 with `Rejected`.*
-      **Ready to start.** Both halves now have fixtures. The criterion reaches into WP-1.2 and
-      1.3 for the events it names; scope it to the server (sweep J).
+      **Both halves run**, under uvicorn and curl as well as in tests. The criterion's "up to
+      `negotiation.pending-approval`" reaches into WP-1.2 and 1.3; scoped to the server, as the
+      sweep recommended (J) — the visit stops at `negotiation.requested` behind a `Negotiator`
+      interface and that is visible in the stream. 104 tests; six mutations, five caught at
+      once, and the two survivors bought a bounded event stream and a test for the event log's
+      own validation.
 - [ ] **WP-1.2 — PEP 1 and payload validation** · 1.1 · M
       *Acceptance: the invalid fixtures concerning requests and trains are refused with the
-      shape's `sh:message` in the event justification.* Digest half ready. Still missing: an
-      invalid **request** fixture (there is none), and the criterion says "refused" where
-      ADR-026 says **Rejected** — PEP 1 rejects, controllers refuse.
+      shape's `sh:message` in the event justification.* **Next.** WP-1.1 left three checks
+      named in `fdt_station.protocol.pep1.MISSING_IN_WP_1_1`: the bearer token against the
+      network's trusted issuers, the ODRL request against `RequestShape`, and the payload
+      against the mechanism's `PayloadShape`. Still missing on the contract side: an invalid
+      **request** fixture (there is none), and the criterion says "refused" where ADR-026 says
+      **Rejected** — PEP 1 rejects, controllers refuse.
 - [ ] **WP-1.3 — Negotiation on arrival (auto-approval path)** · 1.2 · L
       *Acceptance: the fixture offer and request produce the target agreement; the commercial
       request is Refused with the prohibition named.* **Blocked on Q14-B**, and the second clause
