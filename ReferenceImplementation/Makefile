@@ -15,7 +15,7 @@ COMMONS   := $(ROOT)/fdt-commons
 FDTO      := $(ROOT)/FDT-O
 CONSOLE   := $(ROOT)/FDTConsole
 
-PY_COMPONENTS := FAIRDataStation-py FAIRDataTrainHandler IndividualGateway StationDirectory TrainGarage
+PY_COMPONENTS := FAIRDataStation-py FAIRDataTrainHandler IndividualGateway FDTRegistry TrainDepot
 
 # The shapes constrain terms the ontology declares, and sh:class follows rdfs:subClassOf*
 # in the data graph. Point the fdt-commons checker at the merged ontology explicitly rather
@@ -81,9 +81,9 @@ test:  ## run each component's tests, lint and types, in its own environment
 	  ( cd $(ROOT)/$$c \
 	    && uv venv --quiet --allow-existing --python 3.12 .venv \
 	    && uv pip install --quiet --python .venv/bin/python -e ".[dev]" \
-	    && { [ "$$c" = TrainGarage ] || uv pip install --quiet --python .venv/bin/python \
-	         -e $(ROOT)/TrainGarage; } \
-	    && .venv/bin/pytest -q \
+	    && { [ "$$c" = TrainDepot ] || uv pip install --quiet --python .venv/bin/python \
+	         -e $(ROOT)/TrainDepot; } \
+	    && FDT_REQUIRE_DEPOT=1 .venv/bin/pytest -q \
 	    && .venv/bin/ruff check src tests \
 	    && .venv/bin/mypy --strict src ) || exit 1; \
 	done
@@ -103,7 +103,7 @@ e2e:  ## run the milestone scenarios with the real components against each other
 	@echo "── end-to-end ───────────────────────────────────────────────"
 	@uv venv --quiet --allow-existing --python 3.12 $(E2E)
 	@uv pip install --quiet --python $(E2E)/bin/python pytest \
-	  -e $(ROOT)/FAIRDataStation-py -e $(ROOT)/FAIRDataTrainHandler -e $(ROOT)/TrainGarage
+	  -e $(ROOT)/FAIRDataStation-py -e $(ROOT)/FAIRDataTrainHandler -e $(ROOT)/TrainDepot
 	@$(E2E)/bin/pytest -q $(ROOT)/tests/e2e
 	@echo
 	@echo "  M1 one visit ✓ · M2 fan-out and governance · M3 multi-hop · M4 composition"

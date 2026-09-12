@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" font-family="Helvetica, Arial, sans-serif">
+  <desc>UML state machine of the ODRL agreement lifecycle at a FAIR Data Station: requested, matched, pending approval, active, and terminal states fulfilled, expired, revoked, rejected.</desc>
+  <defs>
+    <marker id="starr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1 1L9 5L1 9Z" fill="#444" stroke="#444"/></marker>
+  </defs>
+  <rect x="0" y="0" width="900" height="480" fill="#ffffff"/>
+  <text x="24" y="28" font-size="15" font-weight="bold" fill="#333">Agreement lifecycle — UML state machine</text>
+
+  <circle cx="50" cy="92" r="8" fill="#444"/>
+  <g fill="#FEF6DC" stroke="#B08840" stroke-width="1.2">
+    <rect x="90" y="70" width="150" height="44" rx="12"/>
+    <rect x="310" y="70" width="150" height="44" rx="12"/>
+    <rect x="600" y="70" width="150" height="44" rx="12"/>
+    <rect x="310" y="180" width="190" height="44" rx="12"/>
+    <rect x="80" y="180" width="150" height="44" rx="12"/>
+    <rect x="460" y="300" width="140" height="44" rx="12"/>
+    <rect x="630" y="300" width="130" height="44" rx="12"/>
+    <rect x="780" y="300" width="110" height="44" rx="12"/>
+  </g>
+  <g font-size="12.5" fill="#333" text-anchor="middle" font-weight="bold">
+    <text x="165" y="96">Requested</text>
+    <text x="385" y="96">Matched</text>
+    <text x="675" y="96">Active</text>
+    <text x="405" y="206">Pending approval</text>
+    <text x="155" y="206">Rejected</text>
+    <text x="530" y="326">Fulfilled</text>
+    <text x="695" y="326">Expired</text>
+    <text x="835" y="326">Revoked</text>
+  </g>
+
+  <g stroke="#444" fill="none" marker-end="url(#starr)">
+    <line x1="58" y1="92" x2="88" y2="92"/>
+    <line x1="240" y1="92" x2="308" y2="92"/>
+    <line x1="165" y1="114" x2="156" y2="178"/>
+    <line x1="460" y1="92" x2="598" y2="92"/>
+    <line x1="385" y1="114" x2="401" y2="178"/>
+    <polyline points="500,202 675,202 675,118"/>
+    <line x1="310" y1="202" x2="232" y2="202"/>
+    <line x1="650" y1="114" x2="535" y2="298"/>
+    <line x1="675" y1="114" x2="693" y2="298"/>
+    <line x1="720" y1="114" x2="833" y2="298"/>
+    <line x1="530" y1="344" x2="688" y2="406"/>
+    <line x1="695" y1="344" x2="695" y2="398"/>
+    <line x1="835" y1="344" x2="704" y2="406"/>
+  </g>
+  <g font-size="10.5" font-style="italic" fill="#555">
+    <text x="274" y="84" text-anchor="middle">[match found]</text>
+    <text x="175" y="150" text-anchor="start">[no match]</text>
+    <text x="529" y="84" text-anchor="middle">[auto-approval]</text>
+    <text x="408" y="150" text-anchor="start">[approval required]</text>
+    <text x="560" y="196" text-anchor="middle">[approved]</text>
+    <text x="271" y="190" text-anchor="middle">[denied</text>
+    <text x="271" y="220" text-anchor="middle">/ timeout]</text>
+    <text x="545" y="240" text-anchor="end">[purpose completed]</text>
+    <text x="700" y="222" text-anchor="start">[validity</text>
+    <text x="700" y="236" text-anchor="start">lapsed]</text>
+    <text x="762" y="150" text-anchor="start">[revoked by</text>
+    <text x="762" y="164" text-anchor="start">controller]</text>
+  </g>
+
+  <circle cx="695" cy="410" r="10" fill="none" stroke="#444" stroke-width="1.5"/>
+  <circle cx="695" cy="410" r="5.5" fill="#444"/>
+
+  <g>
+    <path d="M40 380 h230 l14 14 v60 h-244 Z" fill="#FFFBE6" stroke="#B0A860"/>
+    <path d="M270 380 v14 h14" fill="none" stroke="#B0A860"/>
+    <text x="52" y="404" font-size="10.5" fill="#555">Revocation and expiry take effect at the next</text>
+    <text x="52" y="419" font-size="10.5" fill="#555">PEP checkpoint; running jobs are re-evaluated.</text>
+    <text x="52" y="440" font-size="10.5" fill="#555">States mirror the Dataspace Protocol shape.</text>
+  </g>
+</svg>

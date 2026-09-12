@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Proposed**, 12 September 2026. Chosen by Luiz as Q14-B; drafted here because it adds a mechanism the architecture does not yet have. Accepting it means adopting it into `fdt-ecosystem-architecture.md`. |
+| **Status** | **Accepted**, 13 September 2026 — accepted by Luiz in the M5 decision interview. Proposed 12 September 2026, chosen as Q14-B; drafted because it adds a mechanism the architecture did not have. Adoption into `fdt-ecosystem-architecture.md` follows. |
 | **Deciders** | Luiz Olavo Bonino da Silva Santos |
 | **Relates to** | ADR-007/008 (negotiation), ADR-010 (identity), ADR-014 (one agreement per hop), ADR-027 (every decision is an event); `fdt-commons` findings 23–25, 28; `protocol/agreement-derivation.md` §6 |
 

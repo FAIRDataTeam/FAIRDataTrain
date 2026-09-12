@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 650" font-family="Helvetica, Arial, sans-serif">
+  <desc>UML sequence diagram of job execution at a FAIR Data Station under an existing agreement, covering push and poll dispatch, PEP checkpoints, adapter execution against a data backend, and result delivery.</desc>
+  <defs>
+    <marker id="jfill" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1 1L9 5L1 9Z" fill="#444" stroke="#444"/></marker>
+    <marker id="jopen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#444" stroke-width="1.3"/></marker>
+  </defs>
+  <rect x="0" y="0" width="940" height="650" fill="#ffffff"/>
+  <text x="24" y="26" font-size="15" font-weight="bold" fill="#333">Job execution under an existing agreement — UML sequence diagram</text>
+
+  <g stroke="#888" stroke-dasharray="4,4">
+    <line x1="90" y1="76" x2="90" y2="600"/>
+    <line x1="250" y1="76" x2="250" y2="600"/>
+    <line x1="410" y1="76" x2="410" y2="600"/>
+    <line x1="565" y1="76" x2="565" y2="600"/>
+    <line x1="715" y1="76" x2="715" y2="600"/>
+    <line x1="860" y1="76" x2="860" y2="600"/>
+  </g>
+  <g fill="#EDF2F7" stroke="#5B7A99">
+    <rect x="25" y="40" width="130" height="36"/>
+    <rect x="185" y="40" width="130" height="36"/>
+    <rect x="345" y="40" width="130" height="36"/>
+    <rect x="500" y="40" width="130" height="36"/>
+    <rect x="650" y="40" width="130" height="36"/>
+    <rect x="795" y="40" width="130" height="36"/>
+  </g>
+  <g font-size="12" fill="#333" text-anchor="middle" font-weight="bold">
+    <text x="90" y="62">Train Handler</text>
+    <text x="250" y="62">Gateway</text>
+    <text x="410" y="62">Orchestrator</text>
+    <text x="565" y="62">PDP</text>
+    <text x="715" y="62">Adapter</text>
+    <text x="860" y="62">Data source</text>
+  </g>
+
+  <rect x="40" y="95" width="880" height="120" fill="none" stroke="#777" stroke-width="1.2"/>
+  <path d="M40 95 h52 v18 l-8 8 h-44 Z" fill="#EDEDED" stroke="#777"/>
+  <text x="52" y="111" font-size="11.5" font-weight="bold" fill="#333">alt</text>
+  <text x="106" y="111" font-size="11" font-style="italic" fill="#555">[push dispatch]</text>
+  <line x1="40" y1="150" x2="920" y2="150" stroke="#777" stroke-dasharray="7,4"/>
+  <text x="52" y="166" font-size="11" font-style="italic" fill="#555">[poll dispatch — restricted networks]</text>
+
+  <g stroke="#444" fill="none" marker-end="url(#jfill)">
+    <line x1="90" y1="132" x2="248" y2="132"/>
+    <line x1="250" y1="185" x2="92" y2="185"/>
+    <path d="M250 245 h44 v16 h-44" marker-end="url(#jfill)"/>
+    <line x1="250" y1="295" x2="408" y2="295"/>
+    <line x1="410" y1="330" x2="563" y2="330"/>
+    <line x1="410" y1="385" x2="713" y2="385"/>
+    <line x1="715" y1="413" x2="858" y2="413"/>
+    <line x1="410" y1="497" x2="563" y2="497"/>
+  </g>
+  <g stroke="#444" fill="none" stroke-dasharray="5,4" marker-end="url(#jopen)">
+    <line x1="90" y1="205" x2="248" y2="205"/>
+    <line x1="565" y1="356" x2="412" y2="356"/>
+    <line x1="860" y1="441" x2="717" y2="441"/>
+    <line x1="715" y1="469" x2="412" y2="469"/>
+    <line x1="565" y1="523" x2="412" y2="523"/>
+    <line x1="410" y1="555" x2="92" y2="555"/>
+  </g>
+  <g font-size="11.5" fill="#333" text-anchor="middle">
+    <text x="170" y="125">POST job (agreement ref)</text>
+    <text x="170" y="178">GET pending jobs</text>
+    <text x="170" y="199">job (agreement ref)</text>
+    <text x="254" y="238" text-anchor="start">PEP 1: authn · validate</text>
+    <text x="330" y="288">enqueue(job)</text>
+    <text x="487" y="311">PEP 2: evaluate</text>
+    <text x="487" y="325">(agreement · policy)</text>
+    <text x="487" y="350">permit</text>
+    <text x="500" y="378">execute(payload)</text>
+    <text x="787" y="406">query / run container</text>
+    <text x="787" y="435">data / result</text>
+    <text x="660" y="463">result</text>
+    <text x="487" y="478">PEP 3: result &amp;</text>
+    <text x="487" y="492">obligation check</text>
+    <text x="487" y="517">permit (+ duties)</text>
+    <rect x="196" y="538" width="108" height="15" fill="#ffffff"/>
+    <text x="250" y="550">artifacts + status</text>
+  </g>
+
+  <text x="40" y="620" font-size="10.5" font-style="italic" fill="#555">Post-execution obligations (e.g. delete results after N days, usage reporting) are scheduled by the orchestrator.</text>
+  <text x="40" y="636" font-size="10.5" font-style="italic" fill="#555">Every step emits an audit event linked to the agreement.</text>
+</svg>

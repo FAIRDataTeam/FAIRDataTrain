@@ -1,0 +1,67 @@
+@startuml archimate-layered-view
+' FAIR Data Station - ArchiMate layered view
+' Render with PlantUML >= 1.2020 (ArchiMate stdlib)
+!include <archimate/Archimate>
+
+title FAIR Data Station — ArchiMate layered view
+
+' ===== Business layer =====
+Business_Actor(controller, "Data Controller")
+Business_Actor(owner, "Station Owner")
+Business_Actor(consumer, "Data Consumer (Train)")
+Business_Process(publish, "Publish access conditions")
+Business_Process(approve, "Approve agreement")
+Business_Process(operate, "Operate station")
+Business_Process(request, "Request data access")
+Business_Object(offer, "ODRL Offer")
+Business_Object(agreement, "ODRL Agreement")
+Business_Object(odrlrequest, "ODRL Request")
+
+Rel_Assignment(controller, publish, "")
+Rel_Assignment(controller, approve, "")
+Rel_Assignment(owner, operate, "")
+Rel_Assignment(consumer, request, "")
+Rel_Access_w(publish, offer, "")
+Rel_Access_w(approve, agreement, "")
+Rel_Access_w(request, odrlrequest, "")
+
+' ===== Application layer =====
+Grouping(station, "FAIR Data Station") {
+  Application_Component(gateway, "Dispatch Gateway")
+  Application_Component(orchestrator, "Job Orchestrator")
+  Application_Component(metadata, "Metadata (FDP API)")
+  Application_Component(audit, "Audit Log")
+  Grouping(policy, "Policy Subsystem") {
+    Application_Component(pap, "Policy Admin (PAP)")
+    Application_Component(pdp, "Negotiation (PDP)")
+    Application_Component(agstore, "Agreement Store")
+  }
+  Grouping(spi, "Interaction Mechanism SPI") {
+    Application_Component(sparql, "SPARQL adapter")
+    Application_Component(sql, "SQL adapter")
+    Application_Component(api, "API/FHIR adapter")
+    Application_Component(docker, "Docker adapter")
+  }
+}
+Application_Component(trainhandler, "Train Handler")
+Application_Component(fdp, "FAIR Data Point (optional)")
+Application_Component(oidc, "OIDC Provider")
+
+Rel_Flow(trainhandler, gateway, "push jobs")
+Rel_Flow(gateway, trainhandler, "poll jobs")
+Rel_Association(metadata, fdp, "sync (optional)")
+Rel_Serving(oidc, gateway, "authn")
+Rel_Serving(station, operate, "serves")
+Rel_Serving(pap, publish, "serves")
+
+' ===== Technology layer =====
+Technology_Node(runtime, "Python / FastAPI runtime")
+Technology_Node(db, "SQLite -> PostgreSQL")
+Technology_Node(containers, "Container runtime (Docker)")
+Technology_Node(backends, "Data backends (stores, DBs, APIs)")
+
+Rel_Serving(runtime, station, "")
+Rel_Serving(db, station, "")
+Rel_Serving(containers, docker, "")
+Rel_Serving(backends, spi, "")
+@enduml

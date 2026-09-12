@@ -1,0 +1,35 @@
+@startuml uml-sequence-job-execution
+title Job execution under an existing agreement — UML sequence diagram
+
+participant "Train Handler" as th
+participant "Gateway" as gw
+participant "Orchestrator" as orch
+participant "PDP" as pdp
+participant "Adapter" as adapter
+participant "Data source" as ds
+
+alt push dispatch
+  th -> gw: POST job (payload + agreement ref)
+else poll dispatch — restricted networks
+  gw -> th: GET pending jobs
+  th --> gw: job (payload + agreement ref)
+end
+
+gw -> gw: PEP 1: authn · validate
+gw -> orch: enqueue(job)
+orch -> pdp: PEP 2: evaluate (agreement · station policy)
+pdp --> orch: permit
+orch -> adapter: execute(payload)
+adapter -> ds: query / run container
+ds --> adapter: data / result
+adapter --> orch: result
+orch -> pdp: PEP 3: result & obligation check
+pdp --> orch: permit (+ duties)
+orch --> th: artifacts + status
+
+note over th, ds
+  Post-execution obligations (e.g. delete results after N days,
+  usage reporting) are scheduled by the orchestrator. Every step
+  emits an audit event linked to the agreement.
+end note
+@enduml

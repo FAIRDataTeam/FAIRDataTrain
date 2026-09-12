@@ -1,0 +1,51 @@
+# FDT console mock-ups — notes
+
+| | |
+|---|---|
+| **Date** | 11–12 September 2026 (canvas version 4, 22 artboards) |
+| **Canvas** | https://claude.ai/code/artifact/9a76b2fc-76de-4c9a-8104-67b8de06f94e — "FAIR Data Train Consoles" (editable design canvas; pages: Train Handler · Individual Gateway · Data Station · Design system) |
+| **Direction** | "Institutional calm": warm off-white ground, serif headings (Source Serif 4) with a humanist sans for UI text (Source Sans 3), one FDT identity with three accents — teal for the Train Handler, plum for the Individual Gateway, deep blue for the Data Station |
+| **Frame** | 1440 × 1080 desktop, static screens |
+| **Sources** | `screens/*.dc.html` + `canvas.json` (artboards), `gen/*.py` (generator — run `python3 gen/build.py` from the folder above `gen/` to regenerate the artboards), `png/*.png` (renders with fallback fonts) |
+
+## Train Handler (data consumer / train owner)
+
+- **H1 Trains** — catalogue synced from garages; type/mechanism chip per train (`fdt-o` train types), parameter count, compatible-station count; detail panel with parameters and payload template. Two trains are flagged *pattern support pending* (time-to-groin discovery, federated regression) to show where itinerary patterns will plug in; one cross-domain train (air-quality exposure) shows domain-agnosticism.
+- **H2 New plan** — stepper Train → Parameters → Stations → Review. Parameters rendered from the train's declared parameter schema (mode enum, validated gene-symbol chips, numeric limits). Station picker shows each station's access conditions as a plain-language sentence taken from its metadata and the expected matching outcome (auto-match / approval required / unreachable). Plan summary carries the **itinerary map preview** (stations to be visited, dashed = not yet started) and a fan-out label; other patterns are named as pending.
+- **H3 Run monitor (Main)** — the live **itinerary map**: edge and badge colour follow the state of each visit (delivered / pending approval / running), with time notes under each station; visits table with the five checkpoint dots (arrival · agreement · execute · inspect · deliver); event feed.
+- **H4 Finished run** — the same map as a **replay**: transport controls, a time scrubber with one tick per event (coloured by state), the current step described in a sentence, and the full step list with the current step highlighted ("walk through time"). Right: artifacts per station with inspection outcome, merged result, obligations (deletion duty), PROV-O provenance record.
+- **H5 Discovery-chain run (P4, time-to-groin)** — the itinerary map for an **open-ended itinerary**: Handler → EVT centre (hop 1) → Linkage station (hop 2, pseudonym translation) → stations *named by the previous hop's result* (ambulance service waiting for approval, referring centre running, GP post discovered but not yet requested, drawn dimmed). Cards: budget (hops / stations / deadline), stop condition and onward-state statement (what left each station, what the Handler holds — ADR-015/016); **one agreement per hop** table (ADR-014). Sample copy uses the sourced NVN/NVvR door-to-groin norms only (never a "< 2 h" figure). All stations fictional.
+- **H6 Two-phase run (P7)** — phase bar (Phase 1 feasibility count → condition `phase1.count ≥ 50` → Phase 2 analysis); the map fans out from a **condition node** to six stations resolved by a directory query, three of them "Not selected" (below threshold, dimmed) — only their counts (aggregates) reached the Handler.
+- **H7 Iterative rounds (P5, v2 preview)** — round bar with the convergence delta per round; Handler → 4 stations → aggregate node; **Regional Clinic dropped since round 4** (approval renewal timed out → *DropForRemainingRounds*, ADR-026); stop condition shown as the JMESPath predicate `latest.result.max_abs_delta < 0.001 || round >= 20` (ADR-025: the train computes, the plan compares).
+- **H8 Composition (P8)** — a cross-domain DAG (agriculture × meteorology × soil on the 1 km grid): phase C rejected at result inspection → phase E **pruned**; D declared C optional and ran without it. Below the map, the **completeness statement** the consumer receives: "Delivered 3 of 5 phases", outcome and stated reason per phase, and the sentence carried verbatim in the report (ADR-026).
+
+## Individual Gateway (data controller — organisation or natural person, ADR-018)
+
+- **G1 Overview** — one controller (here an organisation) across the stations hosting its resources in two networks: KPIs, resources table with the condition in force per network and pending approvals, approvals waiting for the controller (with countdown), activity on the controller's data across all stations (audit slice). One resource shows "No condition — not reachable".
+- **G2 Resource detail** — hosted-at / networks / join keys / controller header; **conditions per network** (ADR-017: evaluated per network) in the plain-language pattern; agreements over the resource; controller actions: revoke an agreement, suspend new agreements in one network, withdraw the resource (for a natural person: the opt-out; EHDS from 2029, Wkz).
+- **G3 Condition editor** — the S4 builder in the gateway: pick the **network** first (one condition, one network), then resources on the hosting station, actions, constraints (incl. "trains from this network's garage only"), duties, approval toggle; preview tabs *Plain language / Formal / Where it lands* (published as an `odrl:Offer` at the hosting station under the network); a consistency note when another network carries a different condition on the same resource.
+- **G4 Approval detail** — S3's decision panel plus a third column: *what this decision does to the consumer's run* — which plan and phase the visit belongs to, what happens on approve (only declared outputs leave; phase 2 asks again) and on deny (the visit ends **Refused** with your reason; the run reports "selected s of m" and lists the station as refused, never as "below threshold" — ADR-026).
+
+## Data Station console (one app, role-based views)
+
+- **S1 Dashboard (owner)** — health, jobs today, pending approvals, active agreements, dispatch mode; interaction mechanisms with sandbox posture; station identity (profile, capacity class, identity providers, FDP endpoint); hosted controllers with pending counts; audit highlights.
+- **S2 Jobs (owner)** — jobs table; the selected rejected job expands into the **checkpoint timeline** PEP 1 → PEP 2 → Execution → PEP 3 with each decision's justification (here: rejected at result inspection, k-anonymity duty).
+- **S3 Approvals (controller)** — queue with countdown to automatic rejection; detail with identity provenance, stated purpose, requested actions, and *how your conditions matched* (green checks, amber "requires your approval"); Approve / Deny with reason / Ask a question.
+- **S4 Access condition builder (controller)** — five guided steps (resources, allow/prohibit actions, constraints, duties, approval toggle) with a live plain-language preview following the controlled sentence pattern (allows / prohibits / requires), a consistency check, the effective-access note (controller condition AND owner policy), and the formal ODRL one tab away.
+- **S5 Agreement detail (controller)** — parties with identity provenance, conditions in force in prose, jobs under the agreement, lifecycle timeline, revoke with consequence warning.
+- **S6 Datasets (controller)** — metadata-completeness meter, condition in force, 12-week activity sparkline, who can reach it, approvals; the selected dataset (41 %) lists exactly what is missing and why it matters (no condition → not matchable; no join keys → not joinable, ADR-024).
+- **S7 Audit explorer (auditor)** — filterable event stream (time, actor, dataset, agreement, outcome) with the **justification chain** of the selected event: duty → agreement → train digest → inspection decision → identity claim set; export as PROV-O / CSV.
+- **S8 Station settings (owner)** — mechanisms on/off with sandbox posture (Docker: no egress, 4 CPU / 8 GB, images from trusted garages), *identifier translation* off unless a linkage station (ADR-022); hosted controllers incl. a natural person with gateway link; trusted issuers, network memberships, dispatch mode, processing location, capacity class; deployment profile with the EHDS SPE variant as a future switch; "Save and republish self-description".
+- **S9 Public catalogue page (unauthenticated)** — no console chrome: station identity, networks, datasets with conditions in plain language and join keys, "Send a train here" (opens the Handler), how it works in four steps, machine-readable links (FDP, DSP catalogue, self-description).
+
+## Design system sheet
+
+State system (agreement / job / run lifecycles; every state = hue + icon + label; five hues: grey not-yet, blue machine-in-progress, amber waiting-on-a-person, green good end, red bad end, teal live execution), palette, type and spacing, human-readable policy pattern, icon set.
+
+## Sample data
+
+Follows the July 2026 design brief: University of Twente Data Station, controllers Cardiology Research Group (Dr. A. Jansen) and SCS group (Dr. L.O. Bonino), consumer EU-CardioNet consortium (M. de Vries, Radboudumc), HealthAI B.V. commercial denial, k-anonymity rejection. "Noorderlicht MC", the garages, agreement/job ids and all times are fictional; bracketed items such as `[METC ref.]` are placeholders. H5 uses the fictional stroke network Oost of `fdt-use-case-time-to-groin.md` (Noorderlicht MC, Linkage station Oost, Ambulancezorg Oost, Zuiderlicht MC, Huisartsenpost Oost). Trains are shown as executables with a payload and an offer, never as datasets (ADR-020 as amended). Visit outcomes and the completeness statement follow ADR-026; condition text follows ADR-025 (both accepted 12 Sep 2026). H8's agri-climate case is fictional (Agrarisch Datastation Oost, Weerdata station, Bodemkaart station).
+
+## Not yet designed
+
+The clickable approval flow (S3 → S5 → S2 → H4) as an interactive prototype; a job-detail screen (brief screen 3) as its own artboard — the S2 checkpoint timeline covers its core; P6 hierarchical aggregation and P9 recurring as maps (both are compositions of the existing vocabulary). Everything else in the July brief and the 11 Sep decisions is on the canvas.

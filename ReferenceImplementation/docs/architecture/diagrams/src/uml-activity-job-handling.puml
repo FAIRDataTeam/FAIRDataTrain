@@ -1,0 +1,43 @@
+@startuml uml-activity-job-handling
+title Job handling — UML activity diagram
+
+start
+:Receive job (push endpoint / poll worker);
+:PEP 1 — authenticate requester;\nvalidate payload (SHACL);
+if (active agreement referenced?) then (yes)
+else (no)
+  :Match request × offers\n+ station policy (PDP);
+  if (match found?) then (yes)
+    if (approval required?) then (yes)
+      :Create agreement (pending-approval);\nnotify data controller; await decision;
+      if (approved?) then (yes)
+      else (no)
+        :Reject job / request; record in audit log;
+        stop
+      endif
+    else (no — auto)
+    endif
+    :Activate + sign agreement; share with train;
+  else (no)
+    :Reject job / request; record in audit log;
+    stop
+  endif
+endif
+:Enqueue job;
+:PEP 2 — pre-execution check\n(agreement · station policy · quotas);
+if (permit?) then (yes)
+else (no)
+  :Reject job; record in audit log;
+  stop
+endif
+:Execute via mechanism adapter (isolated);
+:Collect results;\nPEP 3 — result & obligation check;
+:Deliver results;\nschedule post-execution obligations;
+stop
+
+note right
+  Every checkpoint decision, state change
+  and execution emits an audit event
+  linked to the governing agreement.
+end note
+@enduml

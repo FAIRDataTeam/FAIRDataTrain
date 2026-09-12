@@ -22,8 +22,8 @@ make check          # the gate: every contract validator in fdt-commons and FDT-
 | [`FAIRDataStation-py`](https://github.com/FAIRDataTeam/FAIRDataStation-py) | the station: PEP 1–3, agreements, metadata, adapters | WP-0.4 done — `GET /` self-description, three profiles, 75 tests |
 | [`FAIRDataTrainHandler`](https://github.com/FAIRDataTeam/FAIRDataTrainHandler) | the Handler: run model, orchestration, conditions, failure policy | skeleton |
 | [`IndividualGateway`](https://github.com/FAIRDataTeam/IndividualGateway) | the data controller's agent across stations | skeleton |
-| [`StationDirectory`](https://github.com/FAIRDataTeam/StationDirectory) | the **metadata registry**: harvests and indexes what Depots and Stations publish, FDP-Index-shaped; not a trust anchor (ADR-029). Indexes trains as well as stations, so the repository name is inaccurate too (Q17) | skeleton |
-| [`TrainGarage`](https://github.com/FAIRDataTeam/TrainGarage) | the **Train Depot**: the authority for a train — payload bytes, digests it computes rather than repeats, parameters, declared output, the owner's offer and public keys (ADR-029). Repository not renamed yet (Q17) | **v0** |
+| [`FDTRegistry`](https://github.com/FAIRDataTeam/FDTRegistry) | the **metadata registry**: harvests and indexes what Depots and Stations publish, FDP-Index-shaped; not a trust anchor (ADR-029). Indexes trains as well as stations, so the repository name is inaccurate too (Q17) | skeleton |
+| [`TrainDepot`](https://github.com/FAIRDataTeam/TrainDepot) | the **Train Depot**: the authority for a train — payload bytes, digests it computes rather than repeats, parameters, declared output, the owner's offer and public keys (ADR-029). Repository not renamed yet (Q17) | **v0** |
 | [`FDTConsole`](https://github.com/FAIRDataTeam/FDTConsole) | one front-end, three role-based apps | design system and generated contract types; no screens yet |
 
 The Java prototypes — `FAIRDataStation`, `TrainHandler`, `TrainHandler-server`,
@@ -100,7 +100,4 @@ are in [`docs/reviews/`](docs/reviews/).
 
 ## Documentation
 
-The architecture is normative and lives outside this repository: the ecosystem architecture
-(ADR-014–027), the station architecture (ADR-001–013), the itinerary patterns, the
-time-to-groin reference case, the data-space alignment register, and the 22 console mock-ups
-that are the UI specification.
+The architecture is normative and is **edited** in the project folder `FAIR Data Train/fair-data-station-architecture/`; **copies live in this repository** under [`docs/architecture/`](docs/architecture/) (copied 12 Sep 2026): the ecosystem architecture (ADR-014–027), the station architecture (ADR-001–013), the itinerary patterns, the time-to-groin reference case, the data-space alignment register, the implementation plan, and the 22 console mock-ups that are the UI specification. Every decision record ADR-001–027 is also extracted into its own file in [`docs/adr/`](docs/adr/), next to ADR-028 onward.

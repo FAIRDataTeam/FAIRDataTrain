@@ -1,0 +1,42 @@
+@startuml archimate-application-cooperation
+' FAIR Data Station - ArchiMate application cooperation view
+!include <archimate/Archimate>
+
+title FAIR Data Station — application cooperation view
+
+Business_Actor(managers, "Data Controllers / Station Owner")
+Application_Component(trainhandler, "Train Handler\n(dispatch, directory)")
+Business_Actor(train, "Train / Consumer\n(requesting party)")
+Application_Component(oidc, "OIDC Provider\n(federated identity)")
+Technology_Node(backends, "Data backends\n(triple store, RDBMS, FHIR/APIs, files)")
+Application_Component(fdp, "FAIR Data Point\n(optional, external)")
+
+Grouping(station, "FAIR Data Station") {
+  Application_Component(gateway, "Dispatch Gateway")
+  Application_Component(orchestrator, "Job Orchestrator")
+  Grouping(policy, "Policy Subsystem") {
+    Application_Component(pap, "Policy Admin (PAP)")
+    Application_Component(pdp, "Negotiation (PDP)")
+    Application_Component(agstore, "Agreement Store")
+  }
+  Grouping(spi, "Interaction Mechanism SPI\n(adapters enabled per deployment)") {
+    Application_Component(sparql, "SPARQL")
+    Application_Component(sql, "SQL")
+    Application_Component(api, "API / FHIR")
+    Application_Component(docker, "Docker\n(process-isolated)")
+  }
+  Application_Component(metadata, "Metadata (FDP API)")
+  Application_Component(audit, "Audit Log\n(receives events from all components)")
+}
+
+Rel_Serving(managers, pap, "manage policies")
+Rel_Flow(trainhandler, gateway, "push jobs")
+Rel_Flow(gateway, trainhandler, "poll jobs")
+Rel_Flow(train, gateway, "negotiate (ODRL)")
+Rel_Serving(oidc, gateway, "authn")
+Rel_Flow(spi, backends, "query / execute")
+Rel_Association(metadata, fdp, "sync")
+Rel_Triggering(gateway, orchestrator, "")
+Rel_Triggering(orchestrator, spi, "")
+Rel_Serving(pdp, orchestrator, "PEP evaluations")
+@enduml

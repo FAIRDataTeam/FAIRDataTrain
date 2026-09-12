@@ -84,7 +84,13 @@ must still run `tests/conditions.cases.json` against it, because the compliance 
 does this implementation agree with the spec? — was never the same question as the
 availability one.
 
-### Q5 — FDT-O: accepting the v2 merge
+### Q5 — FDT-O: accepting the v2 merge — **ANSWERED 13 Sep 2026**
+
+**Decided: push v3 onto the same branch; PR #1 becomes "FDT-O v2 + v3" and is reviewed once.**
+v2 was never released and no `w3id.org` redirect resolves these IRIs, so there is nothing to be
+gained by landing an intermediate state no consumer ever used. The pull request's description
+is rewritten to say what it now contains.
+
 **Blocks:** the `FDT-O` submodule moving from `fdt-o-v2` to `master`.
 
 [PR #1](https://github.com/FAIRDataTeam/FDT-O/pull/1) merges the v2 delta into the ontology
@@ -94,7 +100,7 @@ the `fdt-o-v2` branch, so `make check` is green either way.
 
 ### Q6 — Repository visibility
 The seven repositories created on 12 Sep 2026 (`fdt-commons`, `FAIRDataStation-py`,
-`FAIRDataTrainHandler`, `IndividualGateway`, `StationDirectory`, `TrainGarage`,
+`FAIRDataTrainHandler`, `IndividualGateway`, `FDTRegistry`, `TrainDepot`,
 `FDTConsole`) are **private**, by decision, until M1 runs. `FDT-O`, `FAIRDataTrain`,
 `FAIRDataStation` (Java) and the `TrainHandler-*` repositories are public and unchanged.
 **Default:** flip to public when the M1 scenario passes. Note that WP-4.4 — "a station
@@ -190,7 +196,14 @@ the criterion claims? Record what is missing and fix the fixtures under the chan
 *first*. Doing this at the point where the tests fail instead means the pressure is on to
 bend the code to a broken fixture.
 
-### Q11 — Can an ODRL policy target part of a dataset?
+### Q11 — Can an ODRL policy target part of a dataset? — **ANSWERED 13 Sep 2026**
+
+**Decided: yes — `fdt-o:DatasetPart`, with its own IRI, controller and offers (ADR-033).** Not
+a constraint on the permission, which was the interim default: that leaves the catalogue
+advertising more than is actually on offer, and it cannot express a part whose controller
+differs from the whole — which is the case that matters, and the one the Individual Gateway
+depends on. FDT-O v4, additive.
+
 **Blocks:** WP-1.3's evaluator scope and WP-2.5's catalogue.
 
 Stated 12 Sep 2026: *the station has ODRL policies for each dataset (or even to parts of
@@ -249,7 +262,7 @@ includes a station rewriting its own history, that needs an append-only log or
 counter-signature by the train owner, and that is an ADR, not a shape. `AgreementShape` can
 express the digests today; it cannot express custody.
 
-### Q13 — Authorization modes — **PARTLY ANSWERED 12 Sep 2026**
+### Q13 — Authorization modes — **ANSWERED; 1 and 4 on 12 Sep 2026, 2 and 3 on 13 Sep 2026**
 **Blocks:** WP-1.3 (the PDP's output), WP-2.4 (approval and the Gateway), WP-2.7 (S3, G4).
 
 Stated 12 Sep 2026: authorisation is sometimes allowed to happen automatically; in other
@@ -276,12 +289,16 @@ agreement records which one applied (finding 26).
 can automatically **grant**, automatically **refuse**, or automatically **grant with
 redactions and duties**. A regime that forbids automated granting may permit automated
 refusal, or may not — an automated refusal is still an adverse decision taken by a machine.
-**Default:** the flag governs **granting** only; refusals may be automatic, and every refusal
-already carries a stated reason and is appealable by resubmission. Flagged because it is a
-legal question, not a technical one, and the conservative reading may be the opposite.
+**DECIDED 13 Sep 2026: where a machine may not grant, it may not refuse either.** Both
+directions are adverse decisions taken about somebody's request, and reading the regime narrowly
+would be the implementer's convenience rather than the regulator's meaning. The station still
+does the whole evaluation and **presents a recommendation with its evidence** — "the conditions
+require a research purpose and the train declares a commercial purpose" — for a person to decide
+on: withholding the analysis because the machine may not decide would leave the human with less
+basis, not more independence. ADR-032.
 
-**3. What must be recorded when a human decided?** Beyond `approval.controller` and
-`approval.expiresAt`, which exist:
+**3. What must be recorded when a human decided? DECIDED 13 Sep 2026: all four.** Beyond
+`approval.controller` and `approval.expiresAt`, which exist:
 
 - the **mode** that applied — automatic-permitted, human-required-by-regulation, or
   human-by-controller-preference — and the rule that imposed it;
@@ -359,7 +376,18 @@ claims do not belong in a document that is immutable by design and held by both 
 the two parties from each other, a signature protects a third party who kept nothing. Closes
 findings 19, 23, 24, 25, 28 and 30. `fdt-commons` v0.12.0.
 
-**C remains open**, and follows the decisions already recorded in Q12 and Q13. What B used to
+**C — decided 13 Sep 2026 (ADR-031): metadata names, a credential proves.** A train's metadata
+names the responsible party (`fdt-o:TrainOwner`, which FDT-O already defines as the agent on
+whose behalf a train visits). That is a reference, not evidence: a party's own metadata is not
+evidence about that party, and believing it would reintroduce exactly the inversion finding 51
+had just removed one layer up. The binding is established by a **W3C Verifiable Credential**
+presented with the visit, proving the caller acts for that party and carrying the eligibility
+attributes. A credential that proves a different party from the one the metadata names is a
+rejection at PEP 1. Credentials enter **v1 for eligibility attributes only** — OIDC keeps doing
+authentication, as ADR-010 has it — because eligibility facts are precisely what a station
+cannot verify today and must fail closed on. Full DCP presentation stays ADR-010's v2.
+
+What C originally asked, and the rest of it, follows the decisions recorded in Q12 and Q13. What B used to
 block: `agr-m1-01` is derivable from its own offer and
 request, so an evaluator has a target it can reach, but `AgreementShape` still validates form
 rather than derivation (finding 28) and carries neither the evidence block nor the validity
@@ -368,7 +396,12 @@ window Q12 decided on. Every change goes through the change protocol: `fdt-commo
 
 ---
 
-### Q15 — Does a zero cell violate a k-anonymity duty? — **OPEN; conservative default taken**
+### Q15 — Does a zero cell violate a k-anonymity duty? — **ANSWERED 13 Sep 2026**
+
+**Decided: a zero passes.** The disclosure-control convention, and what the code already does:
+what suppression protects is a small non-empty group, and from a zero nobody can be singled
+out. `ZERO_IS_NOT_A_DISCLOSURE` stays `True` and the fixture stays as it is. The
+distribution-disclosure risk noted below is real and is accepted.
 
 **The question.** An agreement carries `odrl:aggregate` with `fdt-p:kAnonymity gteq 5`. A
 released cell counts **0** subjects. Does that violate the duty?
@@ -397,7 +430,17 @@ it; it would need its own decision about what a redacted envelope tells the cons
 
 ---
 
-### Q16 — What grammar does `fdt-run:targetQuery` speak? — **OPEN; blocks WP-5.3, WP-3.1, WP-3.2**
+### Q16 — What grammar does `fdt-run:targetQuery` speak? — **ANSWERED 13 Sep 2026**
+
+**Decided: the question was the wrong shape, and `targetQuery` is replaced (ADR-030).** Station
+selection is not a search over labels: it is whether a station holds the data the train needs
+to run. A train declares its input requirement as a **SHACL** model (FDT-O's
+`fdt-o:InputRequirement`, which has existed since v2); a non-RDF station publishes an **RML**
+mapping and the shape is generated from it; matching is **structural coverage**, which is
+decidable and can say which required property is missing. Non-data constraints — mechanism,
+network, processing location — are stated **separately**, because "no station holds your data"
+and "no station in this network may process in the EU" are different answers and ADR-026 needs
+them apart.
 
 **The question.** A discovery plan selects its stations with `fdt-run:targetQuery`. The term is
 declared, every discovery fixture carries one, and **no grammar says what the string means.**
@@ -428,11 +471,16 @@ discovery patterns that have nothing to send.
 
 ---
 
-### Q17 — Do the component repositories get renamed? — **OPEN; WP-5.2 proceeds either way**
+### Q17 — Do the component repositories get renamed? — **ANSWERED 13 Sep 2026**
+
+**Decided: rename both.** `TrainDepot` → `TrainDepot`, and `FDTRegistry` →
+**`FDTRegistry`** — a name that does not say "station", since it indexes trains and whatever
+else a publishing FDP defines. Done while both are private and nothing external clones them;
+GitHub redirects the old names, so it is not destructive.
 
 **The question.** ADR-029 renamed the Train Garage to the Train Depot and the rename has landed
 in FDT-O, `fdt-commons` and both components. Two GitHub repositories still carry the old names:
-`FAIRDataTeam/TrainGarage`, and `FAIRDataTeam/StationDirectory` — which ADR-029 also makes
+`FAIRDataTeam/TrainDepot`, and `FAIRDataTeam/FDTRegistry` — which ADR-029 also makes
 inaccurate, since the registry indexes trains as well as stations.
 
 **Why it is yours.** Renaming a repository in the `FAIRDataTeam` organisation changes clone
@@ -440,24 +488,23 @@ URLs and submodule paths for everyone, and is an action on the organisation rath
 code. I have not taken it. (GitHub redirects the old name, so it is not destructive — but it is
 still outward-facing and yours.)
 
-**What the code does now.** Everything *inside* the repositories says Depot, including the
-Python package: WP-5.2 renamed `fdt_garage` to `fdt_depot`, since that is a change within a
-repository and not an act on the organisation. What is untouched is the repository name, the
-submodule paths `ReferenceImplementation/TrainGarage` and
-`ReferenceImplementation/StationDirectory`, and the `StationDirectory` package (nothing has been
-built there yet). So the boundary is exactly the repository: `git clone TrainGarage` gives you a
-Train Depot.
-
-**If you say yes**, the rename is: GitHub repo → update `.gitmodules` and the submodule path →
-the `PY_COMPONENTS` list in the `Makefile` → the three `-e $(ROOT)/TrainGarage` lines in it.
-Suggested names: `TrainDepot`, and for the registry something that does not say "station" —
-`FDTRegistry` or `FDTIndex`.
+**Done 13 Sep 2026.** `TrainGarage` → **`TrainDepot`**, `StationDirectory` → **`FDTRegistry`**,
+both renamed on GitHub while still private; the submodule paths, names, remotes and the
+`Makefile` follow. The Python package had already become `fdt_depot` in WP-5.2, since that is a
+change inside a repository rather than an act on the organisation. GitHub redirects the old
+names, so nothing that referred to them is broken.
 
 **Blocks nothing.** WP-5.2 builds the Depot in whichever repository it lives in.
 
 ---
 
-### Q18 — Are the intermediate train families abstract too? — **OPEN; conservative default taken**
+### Q18 — Are the intermediate train families abstract too? — **ANSWERED 13 Sep 2026**
+
+**Decided: yes, the families are abstract too.** `fdt-o:QueryTrain`, `fdt-o:APITrain`,
+`fdt-o:ScriptTrain` and `fdt-o:ContainerTrain` gain `dash:abstract true` and leave
+`:TrainShape`'s list, so only leaves — `SPARQLTrain`, `DockerTrain`, `FHIRTrain` and the rest —
+are instantiable. A train is then classified as exactly what it is, which is what ADR-029
+meant. No fixture changes: they all use leaves already.
 
 **The question.** ADR-029 made `fdt-o:Train` abstract. FDT-O has two levels below it: the
 families (`fdt-o:QueryTrain`, `fdt-o:APITrain`, `fdt-o:ScriptTrain`, `fdt-o:ContainerTrain`) and

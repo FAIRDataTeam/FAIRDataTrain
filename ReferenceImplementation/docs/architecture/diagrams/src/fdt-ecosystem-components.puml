@@ -1,0 +1,62 @@
+@startuml fdt-ecosystem-components
+' FAIR Data Train — ecosystem components (ArchiMate application cooperation view)
+!include <archimate/Archimate>
+!pragma layout smetana
+left to right direction
+skinparam linetype ortho
+
+title FAIR Data Train — ecosystem components (v0.1, 11 Sep 2026)
+
+Business_Actor(controller, "Data Controller\n(organisation or natural person)")
+Business_Actor(consumer, "Data Consumer /\nTrain Owner")
+Business_Actor(provider, "Train Provider")
+Business_Actor(governance, "Network governance\nauthority (per FDT network)")
+
+Grouping(consumerside, "Consumer side") {
+  Application_Component(handler, "Train Handler\n(plans, runs, orchestration,\nitinerary map & replay;\naggregate results only)")
+}
+
+Grouping(controllerside, "Controller side") {
+  Application_Component(gateway, "Individual Gateway\n(one controller across stations:\nconditions, approvals, audit slice,\nrevocation / opt-out)")
+}
+
+Grouping(federation, "Federation services") {
+  Application_Component(directory, "Station Directory\n(stations, datasets, mechanisms,\nvocabularies, join keys)")
+  Application_Component(garage, "Train Garage\n(catalogue of train offers)")
+  Application_Component(govfn, "Governance function\n(membership, evidence,\ntrusted issuers)")
+}
+
+Grouping(stations, "Data Stations (may belong to several networks)") {
+  Application_Component(station, "Data Station\n(FDP/DCAT metadata, per-visit\nagreements, PEP 1-3, adapters)")
+  Application_Component(linkage, "Linkage Station\n(pseudonym translation,\ntrusted third party)")
+  Application_Component(alignment, "Alignment Station / service\n(vocabulary & code mappings)")
+}
+
+Grouping(commons, "fdt-commons (shared contracts)") {
+  Application_Component(fdto, "FDT-O + profiles,\nSHACL shapes, JSON-LD,\nrun description, state machines")
+}
+
+consumer -down-> handler : submits plans
+provider -down-> garage : publishes train offers
+controller -down-> gateway : governs own data
+controller -down-> station : controller views
+governance -down-> govfn : rules, trust anchors
+
+handler -right-> directory : discover / resolve targets
+handler -right-> garage : select trains
+handler -down-> station : dispatch visits (push / poll),\nprogress events, results
+handler -down-> linkage : linkage hop
+handler -down-> alignment : alignment hop
+gateway -down-> station : offers, approvals,\nrevocation, audit slice
+station -up-> directory : self-description
+station .up.> govfn : memberships / credentials
+station .right.> linkage : (v2) peer forwarding
+station -down-> fdto : validates against
+handler -down-> fdto : validates against
+gateway -down-> fdto : validates against
+
+legend right
+  Solid: v1 interactions · Dotted: v2 or governance
+  Record-level data never leaves a station except to another station under an agreement.
+endlegend
+@enduml

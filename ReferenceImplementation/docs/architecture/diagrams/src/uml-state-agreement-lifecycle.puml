@@ -1,0 +1,23 @@
+@startuml uml-state-agreement-lifecycle
+title Agreement lifecycle — UML state machine
+
+[*] --> Requested
+Requested --> Matched: [match found]
+Requested --> Rejected: [no match]
+Matched --> Active: [auto-approval]
+Matched --> PendingApproval: [approval required]
+PendingApproval --> Active: [approved]
+PendingApproval --> Rejected: [denied / timeout]
+Active --> Fulfilled: [purpose completed,\nobligations met]
+Active --> Expired: [validity lapsed]
+Active --> Revoked: [revoked by controller]
+Fulfilled --> [*]
+Expired --> [*]
+Revoked --> [*]
+
+note bottom of Active
+  Revocation and expiry take effect at the next PEP
+  checkpoint; running jobs are re-evaluated.
+  States mirror the Dataspace Protocol shape.
+end note
+@enduml

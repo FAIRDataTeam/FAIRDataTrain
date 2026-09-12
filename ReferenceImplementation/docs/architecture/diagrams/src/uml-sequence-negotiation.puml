@@ -1,0 +1,34 @@
+@startuml uml-sequence-negotiation
+title Agreement negotiation — UML sequence diagram
+
+participant "Train / Consumer" as train
+participant "Dispatch Gateway" as gw
+participant "Negotiation (PDP)" as pdp
+participant "Agreement Store" as store
+actor "Data Controller" as controller
+
+train -> gw: POST ODRL Request (OIDC token)
+gw -> gw: PEP 1: authn · validate (SHACL)
+gw -> pdp: match(request)
+pdp -> pdp: evaluate offers × station policy
+alt auto-approval
+  pdp -> store: create agreement (active, signed)
+  store --> pdp: agreement ref
+  pdp --> gw: agreement
+  gw --> train: 201 Created — signed agreement
+else approval required by controller's offer
+  pdp -> store: create agreement (pending-approval)
+  pdp --> gw: pending
+  gw --> train: 202 Accepted — status URL
+  store -> controller: notify: approval requested
+  controller -> store: approve / deny
+  store -> store: state -> active; sign
+  store --> train: agreement active (callback / status poll)
+end
+
+note over train, controller
+  All decisions and state changes are written to the audit log.
+  Party identities are recorded VC-ready (issuer · subject · proof
+  method), OIDC-backed in v1.
+end note
+@enduml

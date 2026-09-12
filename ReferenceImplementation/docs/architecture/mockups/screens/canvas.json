@@ -1,0 +1,266 @@
+{
+  "artboards": [
+    {
+      "file": "HandlerTrains.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1080,
+      "title": "H1 \u00b7 Trains catalogue",
+      "page": "handler"
+    },
+    {
+      "file": "HandlerPlan.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 1080,
+      "title": "H2 \u00b7 New plan (parameters, stations, itinerary map)",
+      "page": "handler"
+    },
+    {
+      "file": "Main.dc.html",
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 1080,
+      "title": "H3 \u00b7 Run monitor (live itinerary map)",
+      "page": "handler"
+    },
+    {
+      "file": "HandlerRunReplay.dc.html",
+      "x": 4680,
+      "y": 0,
+      "w": 1440,
+      "h": 1080,
+      "title": "H4 \u00b7 Finished run (replay + results)",
+      "page": "handler"
+    },
+    {
+      "file": "HandlerRunDiscovery.dc.html",
+      "x": 0,
+      "y": 1240,
+      "w": 1440,
+      "h": 1080,
+      "title": "H5 \u00b7 Discovery-chain run (P4, time-to-groin)",
+      "page": "handler"
+    },
+    {
+      "file": "HandlerRunTwoPhase.dc.html",
+      "x": 1560,
+      "y": 1240,
+      "w": 1440,
+      "h": 1080,
+      "title": "H6 \u00b7 Two-phase run (P7)",
+      "page": "handler"
+    },
+    {
+      "file": "HandlerRunRounds.dc.html",
+      "x": 3120,
+      "y": 1240,
+      "w": 1440,
+      "h": 1080,
+      "title": "H7 \u00b7 Iterative rounds (P5, v2 preview)",
+      "page": "handler"
+    },
+    {
+      "file": "HandlerRunComposition.dc.html",
+      "x": 4680,
+      "y": 1240,
+      "w": 1440,
+      "h": 1080,
+      "title": "H8 \u00b7 Composition run (P8) \u2014 completeness statement",
+      "page": "handler"
+    },
+    {
+      "file": "GatewayOverview.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1080,
+      "title": "G1 \u00b7 Individual Gateway \u2014 overview",
+      "page": "gateway"
+    },
+    {
+      "file": "GatewayResource.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 1080,
+      "title": "G2 \u00b7 Individual Gateway \u2014 resource detail",
+      "page": "gateway"
+    },
+    {
+      "file": "GatewayCondition.dc.html",
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 1080,
+      "title": "G3 \u00b7 Condition editor (per network)",
+      "page": "gateway"
+    },
+    {
+      "file": "GatewayApproval.dc.html",
+      "x": 4680,
+      "y": 0,
+      "w": 1440,
+      "h": 1080,
+      "title": "G4 \u00b7 Approval detail with run consequence",
+      "page": "gateway"
+    },
+    {
+      "file": "StationDashboard.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1080,
+      "title": "S1 \u00b7 Station dashboard (owner)",
+      "page": "station"
+    },
+    {
+      "file": "StationJobs.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 1440,
+      "h": 1080,
+      "title": "S2 \u00b7 Jobs monitor (checkpoint timeline)",
+      "page": "station"
+    },
+    {
+      "file": "StationApprovals.dc.html",
+      "x": 3120,
+      "y": 0,
+      "w": 1440,
+      "h": 1080,
+      "title": "S3 \u00b7 Approvals inbox (controller)",
+      "page": "station"
+    },
+    {
+      "file": "StationPolicy.dc.html",
+      "x": 0,
+      "y": 1240,
+      "w": 1440,
+      "h": 1080,
+      "title": "S4 \u00b7 Access condition builder (controller)",
+      "page": "station"
+    },
+    {
+      "file": "StationAgreement.dc.html",
+      "x": 1560,
+      "y": 1240,
+      "w": 1440,
+      "h": 1080,
+      "title": "S5 \u00b7 Agreement detail",
+      "page": "station"
+    },
+    {
+      "file": "StationDatasets.dc.html",
+      "x": 3120,
+      "y": 1240,
+      "w": 1440,
+      "h": 1080,
+      "title": "S6 \u00b7 Datasets (controller)",
+      "page": "station"
+    },
+    {
+      "file": "StationAudit.dc.html",
+      "x": 0,
+      "y": 2480,
+      "w": 1440,
+      "h": 1080,
+      "title": "S7 \u00b7 Audit explorer (auditor)",
+      "page": "station"
+    },
+    {
+      "file": "StationSettings.dc.html",
+      "x": 1560,
+      "y": 2480,
+      "w": 1440,
+      "h": 1080,
+      "title": "S8 \u00b7 Station settings (owner)",
+      "page": "station"
+    },
+    {
+      "file": "StationPublic.dc.html",
+      "x": 3120,
+      "y": 2480,
+      "w": 1440,
+      "h": 1080,
+      "title": "S9 \u00b7 Public catalogue page (unauthenticated)",
+      "page": "station"
+    },
+    {
+      "file": "DesignSystem.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1080,
+      "title": "Design system sheet",
+      "page": "system"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "h-note",
+      "page": "handler",
+      "x": 0,
+      "y": -150,
+      "w": 640,
+      "text": "Train Handler \u2014 data consumer / train owner view. H1\u2013H4: pick a train, set parameters, choose stations (fan-out), watch the run on the itinerary map, replay it afterwards. Second row: H5 discovery chain (P4, time-to-groin), H6 two-phase (P7), H7 iterative rounds (P5, a v2 pattern \u2014 one station dropped for the remaining rounds), H8 composition (P8, cross-domain DAG with a pruned phase and the completeness statement). Conditions follow ADR-025 (JMESPath), outcomes and failure policy ADR-026 (both proposed)."
+    },
+    {
+      "id": "h-map",
+      "page": "handler",
+      "x": 3120,
+      "y": -150,
+      "w": 520,
+      "text": "Itinerary map: appears once a plan is defined (H2), updates live while running (H3), becomes a time scrubber after the run (H4). Edge colour + label = state of that visit; dashed = not yet started."
+    },
+    {
+      "id": "g-note",
+      "page": "gateway",
+      "x": 0,
+      "y": -150,
+      "w": 640,
+      "text": "Individual Gateway \u2014 one controller (here an organisation, the Cardiology Research Group; the same screens serve a natural-person controller in the personal profile) across all stations hosting its data: resources, conditions per network, approvals, agreements, audit slice, revoke / suspend / withdraw (opt-out). G3: one condition per network, published to the hosting station. G4: the approval decision shown with what it does to the consumer\u2019s run (refused \u2260 not selected, ADR-026). ADR-017/018, register A8, C8, G8."
+    },
+    {
+      "id": "s-note",
+      "page": "station",
+      "x": 0,
+      "y": -150,
+      "w": 640,
+      "text": "Data Station console \u2014 one app, role-based views (owner / controller / auditor). S1\u2013S2 are owner views; S3\u2013S6 controller views (Cardiology Research Group); S7 auditor; S8 owner settings; S9 the public, unauthenticated catalogue page. This completes the ten screens of the July brief. Sample data follows the brief; every state pairs colour, icon and label."
+    },
+    {
+      "id": "s-flow",
+      "page": "station",
+      "x": 3120,
+      "y": 1240,
+      "w": 520,
+      "text": "Approval journey to demo: S3 approve request agr-8f24 \u2192 it becomes an active agreement like agr-8f19 in S5 (lifecycle, jobs under it) \u2192 its jobs appear in S2 with checkpoint decisions \u2192 results reach the consumer on the Handler side (H4). Bracketed items such as [METC ref.] are placeholders, not facts."
+    }
+  ],
+  "pages": [
+    {
+      "id": "handler",
+      "name": "Train Handler"
+    },
+    {
+      "id": "gateway",
+      "name": "Individual Gateway"
+    },
+    {
+      "id": "station",
+      "name": "Data Station"
+    },
+    {
+      "id": "system",
+      "name": "Design system"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "handler"
+  }
+}

@@ -8,7 +8,7 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** **WP-5.4 — several stations, configured and running** (M5, below): more than one station with real data sources, in at least two networks, so per-network terms (ADR-017) are visible rather than asserted, and the same train visiting two stations gets two different agreements. It is the work to do now because **WP-5.3, the metadata registry, is blocked on Q16** — `fdt-run:targetQuery` has no grammar, and it is what a plan uses to select stations from a registry, so the registry's query surface cannot be scoped until you have decided it. WP-5.1 and WP-5.2 are done: FDT-O is at 3.0.0 with the Depot rename and `fdt-o:Train` abstract, and `make e2e` runs the Handler, a station and a Train Depot against each other with the payload digest traced from bytes to checkpoint. **Q16** is the one that blocks work; **Q17** (repository renames) and **Q18** (are the train families abstract too?) block nothing.
+**Next:** **WP-5.0 — FDT-O v4 and the contracts ADR-030/033 need**, then WP-5.3 (`FDTRegistry`) and WP-5.4 (several stations, in two networks that differ on whether a machine may decide). The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always. WP-5.1 and WP-5.2 are done: FDT-O is at 3.0.0 and `make e2e` runs the Handler, a station and a Train Depot against each other with the payload digest traced from bytes to checkpoint.
 
 | | | |
 |---|---|---|
@@ -161,7 +161,7 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       the named-class hierarchy into the data graph (`tools/ontology.py`) and count what they
       select; 7 mutations, 0 survivors, against a green control. Q18 records whether the
       intermediate train families are abstract too (conservative default: not).
-      **Repository renames are Q17** — `TrainGarage` and `StationDirectory` still carry their
+      **Repository renames are Q17** — `TrainDepot` and `FDTRegistry` still carry their
       old names on GitHub; everything inside them says Depot.
 - [x] **WP-5.2 — Train Depot v0** · 5.1 · L — **done 13 Sep 2026.** `fdt-depot` 0.1.0,
       `fdt-commons` 0.18.0 with the Depot API contract. Serves `/`, `/catalogue`, `/trains`,
@@ -186,29 +186,57 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       12 mutations on the Depot, 11 caught, 1 equivalent (noted in `holdings.py`).
       JWKS is published because ADR-029 makes the Depot the authority for the owner's keys; no
       counter-signing is implemented anywhere, because **ADR-028 is still Proposed**.
-- [ ] **WP-5.3 — Metadata registry v0** · 5.2 · M — **blocked on Q16**
+- [ ] **WP-5.0 — FDT-O v4 and the contracts ADR-030/033 need** · 5.1 · M
+      Additive. `fdt-o:DatasetPart` with its own IRI, controller and offers (**ADR-033**, Q11);
+      the train families `QueryTrain`, `APITrain`, `ScriptTrain`, `ContainerTrain` marked
+      `dash:abstract` and dropped from `:TrainShape`'s list (Q18); the input-requirement
+      structure made normative and given station-side counterparts — a hosted dataset declares
+      what it `dct:conformsTo`, and `fdt-run:targetQuery` is replaced by a data requirement plus
+      separately-stated non-data constraints (**ADR-030**). *Acceptance: `make check` green;
+      every shape that targets an offer accepts a part as a target; a counter-example for each
+      new rule.*
+- [ ] **WP-5.3 — Metadata registry v0 (`FDTRegistry`)** · 5.0, 5.2 · L
       Harvests and indexes what Depots and Stations publish, FDP-Index-shaped. **Not a trust
-      anchor** — membership is proven by the credential in the token, not by an index entry.
-      Shows harvest time rather than implying currency. *Acceptance: a Handler resolves a plan's
-      stations and trains from the registry instead of the fixture catalogue.*
+      anchor** — membership is proven by a credential, not by an index entry. Shows harvest time
+      rather than implying currency. Its query surface is **ADR-030**: index the shapes stations
+      publish, answer a train's data requirement by **structural coverage**, and say which
+      required property a station was missing. *Acceptance: a Handler resolves a plan's stations
+      and trains from the registry instead of the fixture catalogue, and a station that nearly
+      matches is excluded with the missing property named.*
 - [ ] **WP-5.4 — Several stations, configured and running** · 1.4 · M
-      More than one station with real data sources, in at least two networks, so per-network
-      terms (ADR-017) are visible rather than asserted. *Acceptance: the same train visits two
-      stations and gets different agreements.*
+      More than one station with real data sources, in at least two networks — and the two
+      networks differ in **whether automated authorisation is permitted** (ADR-032), so both
+      regimes are exercised rather than described. *Acceptance: the same train visits two
+      stations and gets different agreements; the same commercial request is refused
+      automatically in one network and produces a recommendation awaiting a human in the other.*
 - [ ] **WP-5.5 — Consoles for the testbed** · 2.7, 5.2, 5.3 · L
-      UIs for the Depot, the registry, the stations and the Handler. Scope and layout are open;
-      the three role-based console apps of D3 already exist as a plan, and the Depot and the
-      registry need their own views. *Acceptance: the M1 scenario watched end to end in a
-      browser — the itinerary, the checkpoints, the justifications, the envelope.*
+      Each component's UI has its own job; they are not one observability layer.
+      **Depot:** publish and withdraw trains — upload a payload, declare parameters, the input
+      requirement and the declared output, set the owner's offer, and see the digest the Depot
+      computed; and, first on the page, **what it withholds and why**.
+      **Registry:** harvest status and freshness per source; search by facet and by a train's
+      data requirement, showing why each station matched or did not.
+      **Station:** live visits with every checkpoint decision and justification; the controller's
+      queue — approve, refuse, revoke — with the recommendation and evidence attached (ADR-032);
+      the catalogue and its offers, including parts; configuration and the published
+      self-description.
+      **Handler client:** connect to `FDTRegistry` instances, select and parametrise trains,
+      choose an itinerary strategy, watch the run.
+      The **Individual Gateway is not in M5** — it lands in M2 with the controller workflow it
+      needs (WP-2.4). *Acceptance: the M1 scenario watched end to end in a browser — the
+      itinerary, the checkpoints, the justifications, the envelope — and a train published to the
+      Depot and found through the registry by its data requirement.*
 
-Open before WP-5.3 can be scoped properly: **`fdt-run:targetQuery` has no grammar** — now
-written up as **Q16**, with the options and what each costs. It is what a plan uses to select
-stations from a registry, so WP-5.2 (the Depot) is the work to do while it is open.
+Nothing in M5 is blocked on a decision. Q16 is answered by **ADR-030**, which replaced
+`fdt-run:targetQuery` rather than giving it a grammar: a train declares the data it needs and
+that is what selects a station.
 
 ## M2 — Fan-out and governance
 
-Exit: the fan-out plan across three stations (push and poll); one approval in the Gateway; one
-refusal on commercial purpose; the run ends **Partially Delivered** with a completeness
+Exit: the fan-out plan across three stations (push and poll); one approval in the Gateway; the
+commercial-purpose case shown **both ways** — refused automatically in a network that permits
+automated decisions, and referred to a human with the system's recommendation and evidence in a
+network that does not (**ADR-032**); the run ends **Partially Delivered** with a completeness
 statement.
 
 - [ ] **WP-2.1 — Conditions engine (ADR-025)** · 1.5 · S
@@ -216,23 +244,45 @@ statement.
       M2 criterion that was runnable as written; the 10 cases are evaluated on every
       `make check`. `PhaseResults` scope has no schema and no case.
 - [ ] **WP-2.2 — Failure policy and completeness (ADR-026)** · 2.1 · M
-      Needs a P3 Sequence plan fixture; the fixture refusal at the ambulance service is not
-      derivable from the request template.
+      Needs a P3 Sequence plan fixture. The refusal at the ambulance service is now derivable:
+      `consumerType` arrives as a verifiable credential (**ADR-031**), so the mismatch is an
+      evidenced fact rather than an unverifiable claim. ADR-026 also needs a term for an adverse
+      **recommendation** that is not yet a decision (ADR-032) — neither Refused nor Rejected,
+      because no controller has decided anything.
 - [ ] **WP-2.3 — Poll dispatch (Handler API)** · 1.5 · M
       Contract complete; inherits the M2 scenario's fixture gaps.
-- [ ] **WP-2.4 — Manual approval, controller API, Individual Gateway v0** · 1.3 · L
-      The controller API it must implement **has no contract anywhere** (sweep I); what a human
-      decision records is Q13.
-- [ ] **WP-2.5 — Metadata: FDP endpoints and DSP-conformant catalogue** · 0.4 · M
-      Fixture catalogue conforms. `dcat:theme` exists on trains and on the M1 dataset only;
-      WP-3.4 needs it more widely.
+- [ ] **WP-2.4 — Manual approval, controller API, Individual Gateway v0** · 1.3 · XL
+      The controller API **still has no contract anywhere** (sweep I) and **ADR-032** now sets
+      what it must carry: the recommendation, the evidence behind it, the decision, and the four
+      things the agreement records — the mode and the rule that imposed it, who decided and under
+      what authority, what they were shown, and whether they followed or departed from the
+      recommendation. Write the contract in `fdt-commons` first.
+      The **Individual Gateway** is the component that shows what FDT is for, and it is larger
+      than "approve things": ask each station whether it holds data under my control — an
+      authenticated ask, answered only for a verified identity and itself logged as an access
+      event (**ADR-031**); define the access conditions for my data; see who accessed it, when
+      and for what; receive and decide consent requests. The station-side "do you hold data I
+      control" endpoint is a new protocol capability and needs its own contract and its own
+      counter-examples — it is a probe about a named individual and must not become one.
+      `fdt-o:DatasetPart` (**ADR-033**) is what lets a person be the controller of part of
+      somebody else's dataset, which is the case that makes a Gateway necessary at all.
+- [ ] **WP-2.5 — Metadata: FDP endpoints and DSP-conformant catalogue** · 0.4, 5.0 · M
+      Fixture catalogue conforms. `dcat:theme` exists on trains and on the M1 dataset only; the
+      registry needs it more widely. Each hosted dataset must now also declare what it
+      `dct:conformsTo` (**ADR-030**), and the catalogue must be able to list `fdt-o:DatasetPart`
+      alongside datasets (**ADR-033**).
 - [ ] **WP-2.6 — SQL, API/FHIR and Docker adapters** · 1.4 · L
       The payload is now a real OCI image layout with true digests, so "an image with a wrong
-      digest never starts" is testable. Still needs a synthetic dataset per adapter.
+      digest never starts" is testable. Still needs a synthetic dataset per adapter — and, under
+      **ADR-030**, an **RML mapping** per non-RDF source, from which the station's published
+      shape is generated. That is what makes a SQL or FHIR station selectable by a train's data
+      requirement at all.
 - [ ] **WP-2.7 — Consoles: Station S1–S6, Handler H1–H4, Gateway G1/G2/G4** · 2.1–2.5 · L
-      **Unsatisfiable as written**: 11 of the 31 state labels cannot arise in M2. Scope the
-      criterion to the states the scenario produces (sweep J), and fix the mock-up copy that
-      writes "rejected at matching" for what ADR-026 calls Refused (sweep K).
+      **Rescoped (decided 13 Sep 2026).** The criterion named 31 state labels and 11 cannot arise
+      in M2 (sweep J); it is now the states the scenario actually produces, with the remaining 11
+      listed explicitly as owed to the milestone that produces them — deferred, not dropped. Fix
+      the mock-up copy that writes "rejected at matching" for what ADR-026 calls Refused (sweep
+      K), and add the label ADR-032 needs for an adverse recommendation awaiting a human.
 
 ---
 
@@ -283,16 +333,16 @@ Decisions belong to Luiz (plan §7); code takes the conservative default in
 
 | | | Blocks |
 |---|---|---|
-| **Q14-B** | agreement derivation and `AgreementShape` | WP-1.3, WP-2.4 |
-| **Q14-C** | the commercial request and where `consumerType` comes from | WP-1.3's second clause |
-| **Q15** | does a zero cell violate a k-anonymity duty | nothing; WP-1.4 runs under the default |
-| **Q16** | the `fdt-run:targetQuery` grammar (sweep G) | WP-5.3's scope, WP-3.1, WP-3.2 |
-| **Q17** | do `TrainGarage` and `StationDirectory` get renamed on GitHub | nothing; WP-5.2 builds either way |
-| **Q18** | are the intermediate train families abstract too | nothing; default is that they are not |
-| **Q5** | merge FDT-O PR #1 | WP-0.2's close-out |
 | **Q1** | publish the contracts at their `w3id.org` IRIs | WP-0.2, WP-4.4 |
 | **Q6** | repository visibility | WP-4.4 |
-| **Q11** | can an ODRL policy target part of a dataset | WP-1.3's scope, WP-2.5 |
+| **Q2, Q3, Q7, Q8** | DSP namespace, demo IdPs, the Java prototypes, the old token | nothing in M2 or M5 |
+
+**Answered 13 September 2026** in the M5 decision interview, and now ADRs: **Q16** (station
+selection — ADR-030), **Q14-C** (credentials — ADR-031), **Q13.2/13.3** (human decisions —
+ADR-032), **Q11** (dataset parts — ADR-033), **ADR-028** accepted, **Q15** (a zero cell passes),
+**Q18** (the train families are abstract too), **Q17** (rename both repositories; the registry
+becomes `FDTRegistry`), **Q5** (push v3 onto PR #1's branch). Nothing in M2 or M5 is blocked on
+a decision any more.
 
 ## Dependency graph
 

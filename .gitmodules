@@ -21,12 +21,12 @@
 [submodule "ReferenceImplementation/IndividualGateway"]
 	path = ReferenceImplementation/IndividualGateway
 	url = https://github.com/FAIRDataTeam/IndividualGateway.git
-[submodule "ReferenceImplementation/StationDirectory"]
-	path = ReferenceImplementation/StationDirectory
-	url = https://github.com/FAIRDataTeam/StationDirectory.git
-[submodule "ReferenceImplementation/TrainGarage"]
-	path = ReferenceImplementation/TrainGarage
-	url = https://github.com/FAIRDataTeam/TrainGarage.git
+[submodule "ReferenceImplementation/FDTRegistry"]
+	path = ReferenceImplementation/FDTRegistry
+	url = https://github.com/FAIRDataTeam/FDTRegistry.git
+[submodule "ReferenceImplementation/TrainDepot"]
+	path = ReferenceImplementation/TrainDepot
+	url = https://github.com/FAIRDataTeam/TrainDepot.git
 [submodule "ReferenceImplementation/FDTConsole"]
 	path = ReferenceImplementation/FDTConsole
 	url = https://github.com/FAIRDataTeam/FDTConsole.git
