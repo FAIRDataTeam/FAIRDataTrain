@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  contracts:
+    name: contracts (make check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v3
+
+      # The M0 gate. Every SHACL shape, JSON Schema, protocol fixture and the JSON-LD
+      # round-trip. Nothing downstream is trustworthy while this is red.
+      - name: make check
+        working-directory: ReferenceImplementation
+        run: make check
+
+  console:
+    name: console (typecheck and build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: install
+        working-directory: ReferenceImplementation/FDTConsole
+        run: npm ci || npm install
+
+      # Types come from fdt-commons/protocol/openapi/ and are never committed, so CI
+      # regenerates them: a console that compiles only against a stale checked-in copy
+      # would hide a contract change until runtime.
+      - name: generate contract types
+        working-directory: ReferenceImplementation/FDTConsole
+        run: npm run generate
+
+      - name: typecheck
+        working-directory: ReferenceImplementation/FDTConsole
+        run: npm run typecheck
+
+      - name: build
+        working-directory: ReferenceImplementation/FDTConsole
+        run: npm run build
+
+  components:
+    name: components (${{ matrix.component }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        component:
+          - FAIRDataStation-py
+          - FAIRDataTrainHandler
+          - IndividualGateway
+          - StationDirectory
+          - TrainGarage
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v3
+
+      - name: install
+        working-directory: ReferenceImplementation/${{ matrix.component }}
+        run: |
+          uv venv
+          uv pip install -e ".[dev]"
+
+      - name: test
+        working-directory: ReferenceImplementation/${{ matrix.component }}
+        run: .venv/bin/pytest -q
+
+      - name: lint
+        working-directory: ReferenceImplementation/${{ matrix.component }}
+        run: .venv/bin/ruff check src tests
+
+      - name: typecheck
+        working-directory: ReferenceImplementation/${{ matrix.component }}
+        run: .venv/bin/mypy --strict src

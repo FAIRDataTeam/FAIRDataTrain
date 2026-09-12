@@ -1,6 +1,3 @@
-[submodule "FAIRDataStation"]
-	path = FAIRDataStation
-	url = https://github.com/FAIRDataTeam/FAIRDataStation
 [submodule "TrainHandler"]
 	path = TrainHandler
 	url = https://github.com/FAIRDataTeam/TrainHandler.git
@@ -8,3 +5,28 @@
 	path = specs
 	url = https://github.com/fdt-specs/fdt-specs.github.io.git
 
+[submodule "ReferenceImplementation/fdt-commons"]
+	path = ReferenceImplementation/fdt-commons
+	url = https://github.com/FAIRDataTeam/fdt-commons.git
+[submodule "ReferenceImplementation/FDT-O"]
+	path = ReferenceImplementation/FDT-O
+	url = https://github.com/FAIRDataTeam/FDT-O.git
+	branch = fdt-o-v2
+[submodule "ReferenceImplementation/FAIRDataStation-py"]
+	path = ReferenceImplementation/FAIRDataStation-py
+	url = https://github.com/FAIRDataTeam/FAIRDataStation-py.git
+[submodule "ReferenceImplementation/FAIRDataTrainHandler"]
+	path = ReferenceImplementation/FAIRDataTrainHandler
+	url = https://github.com/FAIRDataTeam/FAIRDataTrainHandler.git
+[submodule "ReferenceImplementation/IndividualGateway"]
+	path = ReferenceImplementation/IndividualGateway
+	url = https://github.com/FAIRDataTeam/IndividualGateway.git
+[submodule "ReferenceImplementation/StationDirectory"]
+	path = ReferenceImplementation/StationDirectory
+	url = https://github.com/FAIRDataTeam/StationDirectory.git
+[submodule "ReferenceImplementation/TrainGarage"]
+	path = ReferenceImplementation/TrainGarage
+	url = https://github.com/FAIRDataTeam/TrainGarage.git
+[submodule "ReferenceImplementation/FDTConsole"]
+	path = ReferenceImplementation/FDTConsole
+	url = https://github.com/FAIRDataTeam/FDTConsole.git
