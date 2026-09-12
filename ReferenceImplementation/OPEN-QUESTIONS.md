@@ -17,10 +17,18 @@ prototypes (`TrainHandler`, `TrainHandler-server`, `TrainHandler-client`, `Train
 stay where they are as the prototype lineage; they are not evolved. One stack, one set of
 generated models, one test harness.
 
-### D2 — Location of the FDT-O ontology file
-**Answered 12 Sep 2026: `FAIRDataTeam/FDT-O` is canonical.** The v2 merge is
+### D2 — FDT-O's location, and the namespace
+**Answered 12 Sep 2026: `FAIRDataTeam/FDT-O` is canonical, and the term namespace stays
+`https://w3id.org/fdt/fdt-o#`** — the one the ontology already declared. The shapes, examples,
+vocabularies and the JSON-LD context, which had used `https://w3id.org/fdt#`, were rebound to
+it. The prototype has no real consumers, so the terms moved under the namespace rather than
+the namespace moving to meet them; nothing is deprecated and no equivalence bridges exist.
+
+Finding 1 is closed and, for the first time, measured: the terms the shapes constrain and the
+terms the ontology declares overlapped in **zero** places, so every `fdt-o:` constraint was
+inert. It is now 42 of 42, asserted on every run and mutation-tested. The v2 merge is
 [PR #1](https://github.com/FAIRDataTeam/FDT-O/pull/1) on branch `fdt-o-v2`, which the
-metaproject pins until it lands. See Q1 and Q5.
+metaproject pins until it lands (Q5).
 
 ### D3 — Console technology
 **Answered 12 Sep 2026: React 18 + TypeScript + Vite**, one codebase with three role-based
@@ -39,9 +47,10 @@ Three IRIs are referenced but resolve to nothing:
 
 | IRI | Referenced by | Served from |
 |---|---|---|
-| `https://w3id.org/fdt#` | every shape, every example, the ontology | `FDT-O/ontology/fdt-o.ttl` |
+| `https://w3id.org/fdt/fdt-o#` | every shape, every example, the ontology | `FDT-O/ontology/fdt-o.ttl` |
 | `https://w3id.org/fdt/run/context.jsonld` | `examples/plan-time-to-groin.jsonld` | `fdt-commons/contexts/fdt-run.context.jsonld` |
-| `https://w3id.org/fdt/v2-delta` | `vocab/fdt-profile.ttl` `owl:imports` | `FDT-O/ontology/fdt-o-v2-delta.ttl` |
+| `https://w3id.org/fdt/fdt-o` | `vocab/fdt-profile.ttl` `owl:imports` | `FDT-O/ontology/fdt-o.ttl` |
+| `https://w3id.org/fdt/schemas/*` | `schemas/run-state.schema.json` `$ref` | `fdt-commons/schemas/` (finding 15) |
 
 `FAIRDataTeam/w3id.org` exists, so this is redirect configuration rather than new
 infrastructure. **Default in force:** validators resolve all three locally and never touch
@@ -75,14 +84,13 @@ must still run `tests/conditions.cases.json` against it, because the compliance 
 does this implementation agree with the spec? — was never the same question as the
 availability one.
 
-### Q5 — FDT-O: retiring the `https://w3id.org/fdt/fdt-o#` namespace
+### Q5 — FDT-O: accepting the v2 merge
 **Blocks:** the `FDT-O` submodule moving from `fdt-o-v2` to `master`.
 
-[PR #1](https://github.com/FAIRDataTeam/FDT-O/pull/1) unifies the term namespace on
-`https://w3id.org/fdt#` and keeps the prototype IRIs as deprecated `owl:equivalentClass` /
-`owl:equivalentProperty` bridges. It is a PR and not a push because retiring a published
-namespace is Luiz's call. **Default:** the metaproject pins the branch, so `make check` is
-green either way.
+[PR #1](https://github.com/FAIRDataTeam/FDT-O/pull/1) merges the v2 delta into the ontology
+and settles the namespace per D2. Nothing is retired, so there is nothing to deprecate — the
+question is now only whether the merge itself is accepted. **Default:** the metaproject pins
+the `fdt-o-v2` branch, so `make check` is green either way.
 
 ### Q6 — Repository visibility
 The seven repositories created on 12 Sep 2026 (`fdt-commons`, `FAIRDataStation-py`,
