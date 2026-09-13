@@ -3,3 +3,6 @@ __pycache__/
 *.py[cod]
 .venv/
 node_modules/
+
+# Component logs from `make up`. Runtime output, not source.
+ReferenceImplementation/.testbed/

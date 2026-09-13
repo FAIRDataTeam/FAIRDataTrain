@@ -69,16 +69,19 @@ ReferenceImplementation/
   Makefile              make check · make generate · make test · make up · make e2e
   OPEN-QUESTIONS.md     what is undecided, and the default in force until it is
   <submodules>          the eight component repositories
-  deploy/               Dockerfiles, compose per scenario, the three deployment profiles
+  deploy/               `make up`: the testbed as processes, one .env profile per instance
   fixtures/             scenario data: test graphs, the fixture OIDC provider, synthetic datasets
-  tests/e2e/            the milestone scenarios, run against composed stations
+  tests/e2e/            the milestone scenarios, every component against the others
   tests/fakes/          a fake station, depot and TTP, so orchestration is testable alone
 ```
 
 ## Milestones
 
-Each ends in a scenario that runs from `docker compose up` and is recorded as an end-to-end
-test. The order and the exit criteria are fixed; durations are not.
+Each ends in a scenario that is recorded as an end-to-end test and can be watched running:
+`make e2e` runs every component against the others in one process, and `make up` starts them as
+real servers to look at in a browser. The order and the exit criteria are fixed; durations are
+not. (Containers are WP-4.3's; the testbed runs the components straight out of the checkout, so
+nothing stands between an edit and the screen.)
 
 | | Exit scenario |
 |---|---|

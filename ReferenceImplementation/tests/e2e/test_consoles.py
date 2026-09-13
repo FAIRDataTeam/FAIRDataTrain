@@ -598,3 +598,57 @@ def test_the_handler_console_resolves_a_train_from_its_depot_and_not_the_index(
     # and the digest the screen shows, which a station checks at PEP 1
     payload = graph.value(train, fdt_o.hasPayload)
     assert str(graph.value(payload, fdt_o.artifactDigest)).startswith("sha256:")
+
+
+def test_the_registry_console_can_tell_never_harvested_from_unreachable(
+    watched: tuple[TestClient, TestClient, RunReport],
+) -> None:
+    """Finding 67, from the console's side.
+
+    `GET /sources` is where the registry explains an empty index, and it is where its 404 for an
+    unknown train sends a reader. Before the first harvest it listed nothing at all — while
+    `GET /` reported three sources in the same breath — so the page contradicted itself and gave
+    no way to find out why.
+
+    The distinction is not cosmetic. "Nobody has harvested yet" needs a harvest; "the station is
+    down" needs somebody to go and look at the station. A console that painted both red as
+    Unreachable sends whoever is on that screen after the wrong one.
+    """
+    from fdt_registry.api import build_app as build_registry
+    from fdt_registry.core.config import RegistrySettings, Source, SourceKind
+    from fdt_registry.core.contracts import Contracts as RegistryContracts
+    from fdt_registry.harvest.harvester import Harvester
+
+    station, _, _ = watched
+    settings = RegistrySettings(
+        iri="https://registry.example/fdt/v1",
+        sources=(
+            Source(url=STATION_URL, kind=SourceKind.STATION),
+            Source(url="http://nothing.here.test", kind=SourceKind.STATION),
+        ),
+        contracts_dir=COMMONS,
+        ontology_dir=ONTOLOGY,
+    )
+    contracts = RegistryContracts(COMMONS, ONTOLOGY)
+    harvester = Harvester(settings, contracts, clients={STATION_URL: station})
+
+    with TestClient(build_registry(settings, contracts, harvester=harvester)) as reg:
+        before = {row["url"]: row for row in got(reg, "/sources")}
+        described = got(reg, "/")
+        reg.post("/harvest")
+        after = {row["url"]: row for row in got(reg, "/sources")}
+
+    # Before any harvest: every configured source is listed, and none of them has failed.
+    assert len(before) == described["sources"] == 2
+    for row in before.values():
+        assert row["attempted"] is False
+        assert row["reached"] is False
+        assert row["error"] is None, "nothing was tried, so nothing failed"
+
+    # After: the two are told apart, and the unreachable one keeps its place with its reason.
+    assert after[STATION_URL]["attempted"] is True
+    assert after[STATION_URL]["reached"] is True
+    unreachable = after["http://nothing.here.test"]
+    assert unreachable["attempted"] is True
+    assert unreachable["reached"] is False
+    assert unreachable["error"], "a source that could not be reached must say why"

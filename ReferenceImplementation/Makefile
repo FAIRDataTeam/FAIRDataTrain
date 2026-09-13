@@ -122,9 +122,12 @@ e2e:  ## run the milestone scenarios with the real components against each other
 	@echo "  M1 one visit ✓ · M2 fan-out and governance · M3 multi-hop · M4 composition"
 
 .PHONY: up
-up:  ## bring up the demo stations
-	@echo "Not implemented yet — deploy/compose/ lands with WP-1.4."
-	@exit 1
+up:  ## bring up the testbed: two stations, a Depot, a registry and a Handler
+	@python3 deploy/testbed.py up
+
+.PHONY: status
+status:  ## is the testbed answering?
+	@python3 deploy/testbed.py status
 
 .PHONY: clean
 clean:  ## remove the checker virtualenv
