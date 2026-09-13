@@ -8,13 +8,13 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** **WP-5.0 — FDT-O v4 and the contracts ADR-030/033 need**, then WP-5.3 (`FDTRegistry`) and WP-5.4 (several stations, in two networks that differ on whether a machine may decide). The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always. WP-5.1 and WP-5.2 are done: FDT-O is at 3.0.0 and `make e2e` runs the Handler, a station and a Train Depot against each other with the payload digest traced from bytes to checkpoint.
+**Next:** **WP-5.3 — the metadata registry** (`FDTRegistry`), whose query surface WP-5.0 just specified and implemented: harvest what Depots and Stations publish, index the shapes, answer a plan's data requirement by structural coverage, and name the property a near-matching station was missing. Then WP-5.4 (several stations, in two networks that differ on whether a machine may decide) and WP-5.5 (the consoles). The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always. WP-5.0, WP-5.1 and WP-5.2 are done: FDT-O is at 4.0.0, `fdt-commons` at 0.19.0, `make e2e` runs the Handler, a station and a Train Depot against each other with the payload digest traced from bytes to checkpoint, and station selection has a specified, executed relation behind it instead of a string nothing read.
 
 | | | |
 |---|---|---|
 | **M0** Foundations | ✅ done | 12 Sep 2026 |
 | **M1** One visit | ✅ done | 12 Sep 2026 |
-| **M5** Testbed (new — ADR-029) | ⬜ next | |
+| **M5** Testbed (new — ADR-029) | 🟨 in progress — WP-5.0, 5.1, 5.2 done | |
 | **M2** Fan-out and governance | ⬜ not started | |
 | **M3** Multi-hop | ⬜ not started | |
 | **M4** Hardening and alignment | ⬜ not started | |
@@ -186,15 +186,38 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       12 mutations on the Depot, 11 caught, 1 equivalent (noted in `holdings.py`).
       JWKS is published because ADR-029 makes the Depot the authority for the owner's keys; no
       counter-signing is implemented anywhere, because **ADR-028 is still Proposed**.
-- [ ] **WP-5.0 — FDT-O v4 and the contracts ADR-030/033 need** · 5.1 · M
-      Additive. `fdt-o:DatasetPart` with its own IRI, controller and offers (**ADR-033**, Q11);
-      the train families `QueryTrain`, `APITrain`, `ScriptTrain`, `ContainerTrain` marked
-      `dash:abstract` and dropped from `:TrainShape`'s list (Q18); the input-requirement
-      structure made normative and given station-side counterparts — a hosted dataset declares
-      what it `dct:conformsTo`, and `fdt-run:targetQuery` is replaced by a data requirement plus
-      separately-stated non-data constraints (**ADR-030**). *Acceptance: `make check` green;
-      every shape that targets an offer accepts a part as a target; a counter-example for each
-      new rule.*
+- [x] **WP-5.0 — FDT-O v4 and the contracts ADR-030/033 need** · 5.1 · M — **done 13 Sep
+      2026.** FDT-O 4.0.0, `fdt-commons` 0.19.0. Every clause of the criterion ran: `make check`
+      is green over twelve passes, both station-catalogue shapes accept a part where they
+      accepted only a whole, and each new rule has a counter-example that fails on the rule's
+      own words — eleven in FDT-O, fifteen here.
+      **`fdt-o:DatasetPart`** (ADR-033) with its own IRI, controller and offers, and
+      **`fdt-o:GovernedData`** as the common superclass of the whole and the part, so that a
+      rule about data an offer may target is written once. Writing it twice is how it goes
+      wrong: a rule still saying `fdt-o:HostedDataset` stops applying to parts and reports
+      "conforms" over data nobody checked. The fixture is the case the alternatives could not
+      express — the 90-day patient-reported answers inside a hospital's registry, controlled by
+      the patient participation council and not by the hospital.
+      **A train declares the data it needs** (ADR-030), as a SHACL model, and that is what
+      selects a station. `fdt-run:targetQuery` is gone with no alias; `fdt-run:StationSelector`
+      states the data requirement (required) and the non-data constraints (optional) separately,
+      because "no station holds your data" and "no station in this network may process in the
+      EU" are different answers a completeness statement has to keep apart. `tools/coverage.py`
+      is the normative implementation of structural coverage and pass 12 runs it over the whole
+      matrix: fourteen pairs, four hits, ten misses in three kinds, each recorded in
+      `tests/coverage-expectations.json` — because a matcher that only ever answers yes is a
+      check that cannot fail, and one that only ever answers no passes just as quietly.
+      **The four train families are abstract** (Q18). The three consumers that had hard-coded
+      "every subclass of Train except Train itself" now read `dash:abstract` from the ontology,
+      each guarded so that missing markers stop the component rather than silently widening what
+      it accepts.
+      **Finding 53**: FDT-O has said since v2 that every train declares a requirement, and no
+      train did — an OWL restriction licenses an inference and never fails, and no shape checked
+      it. **Finding 52**: `fdts:StationPolicyShape` had validated nothing since v0.1 and
+      finding 21 had said so eight versions earlier; a note does not fail a build. What closed
+      it is the new **pass 11**, which counts the focus nodes every shape selects — and which
+      checks its own detector against a shape built to come out dead, so "0 dead" cannot itself
+      be vacuous. 20 mutations, 0 survivors, against a green control run.
 - [ ] **WP-5.3 — Metadata registry v0 (`FDTRegistry`)** · 5.0, 5.2 · L
       Harvests and indexes what Depots and Stations publish, FDP-Index-shaped. **Not a trust
       anchor** — membership is proven by a credential, not by an index entry. Shows harvest time

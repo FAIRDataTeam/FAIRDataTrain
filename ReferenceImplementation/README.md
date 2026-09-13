@@ -17,13 +17,13 @@ make check          # the gate: every contract validator in fdt-commons and FDT-
 
 | Submodule | What it is | Status |
 |---|---|---|
-| [`fdt-commons`](https://github.com/FAIRDataTeam/fdt-commons) | **the contracts**: vocabularies, SHACL shapes, JSON Schemas, JSON-LD contexts, the visit protocol, the fixtures | v0.9.0 — validated |
-| [`FDT-O`](https://github.com/FAIRDataTeam/FDT-O) | the ontology: what a train, payload, hosted dataset, catalogue, controller and station type *are* | v2.0.0 on branch `fdt-o-v2` ([PR #1](https://github.com/FAIRDataTeam/FDT-O/pull/1)) |
-| [`FAIRDataStation-py`](https://github.com/FAIRDataTeam/FAIRDataStation-py) | the station: PEP 1–3, agreements, metadata, adapters | WP-0.4 done — `GET /` self-description, three profiles, 75 tests |
-| [`FAIRDataTrainHandler`](https://github.com/FAIRDataTeam/FAIRDataTrainHandler) | the Handler: run model, orchestration, conditions, failure policy | skeleton |
+| [`fdt-commons`](https://github.com/FAIRDataTeam/fdt-commons) | **the contracts**: vocabularies, SHACL shapes, JSON Schemas, JSON-LD contexts, the visit protocol, the fixtures | v0.19.0 — twelve validation passes |
+| [`FDT-O`](https://github.com/FAIRDataTeam/FDT-O) | the ontology: what a train, payload, hosted dataset, dataset part, catalogue, controller and station type *are* | v4.0.0 on branch `fdt-o-v2` ([PR #1](https://github.com/FAIRDataTeam/FDT-O/pull/1)) |
+| [`FAIRDataStation-py`](https://github.com/FAIRDataTeam/FAIRDataStation-py) | the station: PEP 1–3, agreements, metadata, adapters | M1 done — a visit runs through PEP 1–3, 199 tests |
+| [`FAIRDataTrainHandler`](https://github.com/FAIRDataTeam/FAIRDataTrainHandler) | the Handler: run model, orchestration, conditions, failure policy | M1 done — `fdt-handler run plan.jsonld`, 64 tests |
 | [`IndividualGateway`](https://github.com/FAIRDataTeam/IndividualGateway) | the data controller's agent across stations | skeleton |
-| [`FDTRegistry`](https://github.com/FAIRDataTeam/FDTRegistry) | the **metadata registry**: harvests and indexes what Depots and Stations publish, FDP-Index-shaped; not a trust anchor (ADR-029). Indexes trains as well as stations, so the repository name is inaccurate too (Q17) | skeleton |
-| [`TrainDepot`](https://github.com/FAIRDataTeam/TrainDepot) | the **Train Depot**: the authority for a train — payload bytes, digests it computes rather than repeats, parameters, declared output, the owner's offer and public keys (ADR-029). Repository not renamed yet (Q17) | **v0** |
+| [`FDTRegistry`](https://github.com/FAIRDataTeam/FDTRegistry) | the **metadata registry**: harvests and indexes what Depots and Stations publish, FDP-Index-shaped; not a trust anchor (ADR-029). Its query surface is ADR-030 — answer a train's data requirement by structural coverage | skeleton — **next (WP-5.3)** |
+| [`TrainDepot`](https://github.com/FAIRDataTeam/TrainDepot) | the **Train Depot**: the authority for a train — payload bytes, digests it computes rather than repeats, parameters, the input requirement, declared output, the owner's offer and public keys (ADR-029) | **v0.1.0** — 35 tests |
 | [`FDTConsole`](https://github.com/FAIRDataTeam/FDTConsole) | one front-end, three role-based apps | design system and generated contract types; no screens yet |
 
 The Java prototypes — `FAIRDataStation`, `TrainHandler`, `TrainHandler-server`,
@@ -88,11 +88,14 @@ test. The order and the exit criteria are fixed; durations are not.
 | **M3** Multi-hop | a two-phase plan selecting stations by condition; the time-to-groin chain through a linkage station with per-hop agreements, a pending approval and a pruned branch; the itinerary map live and in replay |
 | **M4** Hardening | composition with a rejected phase; PROV-O run records; DSP state mapping asserted; three deployment profiles from one image; a security review of PEP 1 and the Docker sandbox; conformance material |
 
+**M5** (testbed) was added on 12 September 2026 by ADR-029 and runs before M2: a Train Depot, a metadata registry, several stations and the consoles, so that the ecosystem is something you can watch rather than only something the tests assert.
+
 ### Where the work stands
 
-[`task.md`](task.md) is the tracked roadmap: the plan's 25 work packages, with a box checked
-only when its acceptance criterion has been run. **M0 is done; M1 has not started, its fixtures
-are ready, and WP-1.3 waits on decision Q14-B.** Next: WP-1.1.
+[`task.md`](task.md) is the tracked roadmap: the plan's work packages, with a box checked only
+when its acceptance criterion has been run. **M0 and M1 are done. M5 — the testbed — is in
+progress: the Train Depot runs, FDT-O is at v4, and station selection has a specified relation
+behind it.** Next: WP-5.3, the metadata registry.
 
 Decisions and their conservative defaults are in [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md);
 contract defects and what closed them are in `fdt-commons/FINDINGS.md`, by number; dated audits

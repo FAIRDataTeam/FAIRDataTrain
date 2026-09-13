@@ -206,6 +206,14 @@ depends on. FDT-O v4, additive.
 
 **Blocks:** WP-1.3's evaluator scope and WP-2.5's catalogue.
 
+**Implemented (WP-5.0).** `fdt-o:DatasetPart`, `fdt-o:isPartOfDataset`/`fdt-o:hasDatasetPart`,
+and `fdt-o:GovernedData` as the common superclass of a whole and a part — so a rule about data
+an offer may target is written once instead of in every shape that names `fdt-o:HostedDataset`
+and silently stops applying to parts. The fixture case is
+`ex:part/evt-registry-patient-reported`: the 90-day outcome answers inside a hospital's EVT
+registry, controlled by the network's patient participation council rather than the hospital,
+listed in the station catalogue beside the whole and carrying its own offer.
+
 Stated 12 Sep 2026: *the station has ODRL policies for each dataset (or even to parts of
 datasets).* The contracts do not support the parenthesis. `odrl:target` on an offer is a whole
 `fdt-o:HostedDataset`, `DatasetShape` requires at least one `odrl:hasPolicy` per dataset, and
@@ -430,7 +438,7 @@ it; it would need its own decision about what a redacted envelope tells the cons
 
 ---
 
-### Q16 — What grammar does `fdt-run:targetQuery` speak? — **ANSWERED 13 Sep 2026**
+### Q16 — What grammar does `fdt-run:targetQuery` speak? — **ANSWERED 13 Sep 2026, implemented in v0.19.0**
 
 **Decided: the question was the wrong shape, and `targetQuery` is replaced (ADR-030).** Station
 selection is not a search over labels: it is whether a station holds the data the train needs
@@ -441,6 +449,24 @@ decidable and can say which required property is missing. Non-data constraints �
 network, processing location — are stated **separately**, because "no station holds your data"
 and "no station in this network may process in the EU" are different answers and ADR-026 needs
 them apart.
+
+**Implemented (WP-5.0).** `fdt-run:targetQuery` is gone with no alias — a plan written against
+it named a target set nothing could resolve, so there is nothing to stay compatible with.
+`fdt-run:StationSelector` carries a required `fdt-run:dataRequirement` and the optional
+`fdt-run:requiresMechanism` / `requiresNetwork` / `requiresProcessingLocation`;
+`invalid/selector-without-data-requirement.ttl` is the counter-example, and it is worth having
+because it looks like progress — real terms instead of a string, resolvable by a registry, and
+still matching every station that can be *visited* rather than every station that can run the
+train.
+
+`tools/coverage.py` is the normative implementation of the match, and pass 12 of `make check`
+runs it over the whole fixture matrix against `tests/coverage-expectations.json`. Both trains
+now declare what their payloads actually read, and seven published datasets say what they hold;
+fourteen pairs, four hits and ten misses in three kinds — a class the station does not hold, a
+property it does not record (`ex:station/westerlicht` curates the same associations and records
+no subject counts), and a property recorded as the wrong kind of value (`ex:station/hap-oost`
+keeps contact times as free text). Recording the misses is the point: a matcher that only ever
+answers yes would otherwise pass, and so would one that only ever answers no.
 
 **The question.** A discovery plan selects its stations with `fdt-run:targetQuery`. The term is
 declared, every discovery fixture carries one, and **no grammar says what the string means.**
@@ -498,13 +524,22 @@ names, so nothing that referred to them is broken.
 
 ---
 
-### Q18 — Are the intermediate train families abstract too? — **ANSWERED 13 Sep 2026**
+### Q18 — Are the intermediate train families abstract too? — **ANSWERED 13 Sep 2026, implemented in FDT-O v4**
 
 **Decided: yes, the families are abstract too.** `fdt-o:QueryTrain`, `fdt-o:APITrain`,
 `fdt-o:ScriptTrain` and `fdt-o:ContainerTrain` gain `dash:abstract true` and leave
 `:TrainShape`'s list, so only leaves — `SPARQLTrain`, `DockerTrain`, `FHIRTrain` and the rest —
 are instantiable. A train is then classified as exactly what it is, which is what ADR-029
 meant. No fixture changes: they all use leaves already.
+
+**Implemented (WP-5.0).** The four families carry `dash:abstract true` and are gone from
+`:TrainShape`'s list; `invalid/train-family-only-type.ttl` is the counter-example. The three
+consumers that had hard-coded "every subclass of Train except Train itself" — the station's
+PEP 1, the Handler's catalogue, the Depot's holdings — now read the `dash:abstract` markers
+from the ontology instead, each with a guard that refuses to start if the markers are absent.
+Without that guard the failure is silent in the worst direction: the set of acceptable classes
+widens, and a descriptor naming a family is accepted by a station that then has no adapter to
+choose. Five mutations confirmed each site fails when the markers or a marker are removed.
 
 **The question.** ADR-029 made `fdt-o:Train` abstract. FDT-O has two levels below it: the
 families (`fdt-o:QueryTrain`, `fdt-o:APITrain`, `fdt-o:ScriptTrain`, `fdt-o:ContainerTrain`) and
