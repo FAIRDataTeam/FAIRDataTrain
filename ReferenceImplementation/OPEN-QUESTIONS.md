@@ -688,3 +688,36 @@ label is added upstream the consoles pick it up with no code change.
 **Blocks nothing.** It is a legibility defect, not a correctness one — but it is visible on the
 one screen an unauthenticated visitor sees (S9), which makes it worth a decision rather than a
 shrug.
+
+### Q23 — Which browser origins may read a component? — **DEFAULT TAKEN 13 Sep 2026**
+**Blocks:** nothing. Taken so that the consoles work at all; overturn the default if you read it
+otherwise.
+
+Every console is served from one origin and reads components on others. The Handler's console
+reads a Handler, a registry and a Depot **on one page**, so it cannot be same-origin with all of
+them under any deployment. A browser therefore discards every one of those responses unless the
+component names the page's origin in a header.
+
+Nothing in this repository had ever sent that header, and nothing could have noticed: a test
+client has no same-origin policy, so every suite passed while every console, opened in a browser
+against a live component, reported that the component did not answer. Found by a person opening
+one — which is the only way it could have been found, given what the tests were asking.
+
+**Default taken:** a component allows the origins its operator names and no others
+(`FDT_STATION_CORS_ORIGINS`, `FDT_DEPOT_CORS_ORIGINS`, `FDT_REGISTRY_CORS_ORIGINS`, and
+`fdt-handler serve --allow-origin`), **empty by default**, so a component ships readable by no
+page at all. Machine clients are unaffected either way: the same-origin policy is a browser's
+rule about pages, not a server's rule about clients, and a Handler dispatching a visit or a
+registry harvesting a catalogue never sees it. `*` is accepted, because a station whose
+catalogue is public and nothing else is a real deployment and refusing to let an operator say so
+would be deciding it for them. Cookies never authorise one of these requests
+(`allow_credentials` off): the credential is a bearer token the console puts in a header, and
+with credentials on, any page an operator happened to be visiting could drive their station
+using their session.
+
+**What it does not answer.** Whether the *public* surface — S9's catalogue, `GET /`, the DCAT
+and DSP endpoints of WP-2.5 — should be readable by any page by default while the operator,
+controller and audit surfaces stay closed. That would be two settings rather than one, and it is
+a policy question about what "published" means for a catalogue: a station that publishes a
+catalogue for machines to harvest and refuses to let a web page read it is drawing a line the
+FAIR principles do not obviously draw. Left as one setting until somebody says otherwise.

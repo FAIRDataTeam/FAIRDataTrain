@@ -31,7 +31,7 @@ PROFILES = DEPLOY / "profiles"
 
 sys.path.insert(0, str(DEPLOY))
 from env import read_profile  # noqa: E402
-from testbed import Component, _is_ours, components  # noqa: E402
+from testbed import Component, _is_ours, _named, components  # noqa: E402
 
 STATIONS = ("station-ut.env", "station-oosterlicht.env")
 
@@ -274,3 +274,32 @@ def test_the_two_stations_do_not_share_an_identity() -> None:
     station = Component(name="x", package="p", port=1, argv=[], identity=ut)
     assert _is_ours(station, f"<{ut}> a fdt-o:DataStation .") is True
     assert _is_ours(station, f"<{oosterlicht}> a fdt-o:DataStation .") is False
+
+
+def test_every_component_admits_the_console_this_testbed_ships_with() -> None:
+    """Otherwise `make up` produces six green rows and six consoles that say nothing answered.
+
+    A browser discards a cross-origin response unless the component names the page's origin, so
+    a testbed whose components do not name their own console is a testbed that looks perfectly
+    healthy from the command line and is unusable from the screen — which is how this was found,
+    by a person opening one (Q23).
+
+    The Handler is the one that cannot read a profile, because a Handler has no settings class:
+    it is configured by the plan it is given and the arguments it is dispatched with. So the
+    runner passes what the others read, from the same profile, and this checks that too.
+    """
+    consoles = f"http://localhost:{_profile('console.env')['FDT_TESTBED_PORT']}"
+
+    for profile, key in (
+        ("station-ut.env", "FDT_STATION_CORS_ORIGINS"),
+        ("station-oosterlicht.env", "FDT_STATION_CORS_ORIGINS"),
+        ("depot.env", "FDT_DEPOT_CORS_ORIGINS"),
+        ("registry.env", "FDT_REGISTRY_CORS_ORIGINS"),
+        ("handler.env", "FDT_HANDLER_CORS_ORIGINS"),
+    ):
+        origins = [o.strip() for o in _profile(profile)[key].split(",")]
+        assert consoles in origins, profile
+
+    argv = _named("handler").argv
+    passed = [argv[i + 1] for i, item in enumerate(argv) if item == "--allow-origin"]
+    assert consoles in passed, "the Handler was told of no console; H3 and H4 would be blank"

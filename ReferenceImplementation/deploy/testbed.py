@@ -166,6 +166,14 @@ def components(*, run_plan: bool, host: str = "127.0.0.1") -> list[Component]:
                 "--handler", handler["FDT_HANDLER_IRI"],
                 "--agent", handler["FDT_HANDLER_AGENT"],
                 "--contracts", str(COMMONS),
+                # A Handler has no settings class, so what every other component reads from its
+                # profile the Handler is told on the command line — from the same profile.
+                *[
+                    argument
+                    for origin in handler["FDT_HANDLER_CORS_ORIGINS"].split(",")
+                    if origin.strip()
+                    for argument in ("--allow-origin", origin.strip())
+                ],
                 "--host", host, "--port", str(port),
             ],
             identity=handler["FDT_HANDLER_IRI"],

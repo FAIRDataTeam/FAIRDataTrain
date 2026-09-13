@@ -145,6 +145,7 @@ read and was not is exactly as broken as configuration that is wrong.
 | `FDT_STATION_MEMBERSHIPS` | the profile's | JSON list of network memberships |
 | `FDT_STATION_DATASETS` | none | JSON list; a station serves a dataset because a source is configured for it and for no other reason |
 | `FDT_STATION_AUTH_REQUIRED` | `true` | turning it off is a visible act of configuration, never a default |
+| `FDT_STATION_CORS_ORIGINS` | none | browser origins allowed to read this station, comma-separated — what CORS calls the allowed origins. **Empty means no browser may**, which is why a console reports that a station did not answer until this is set (Q23). `scheme://host[:port]` and nothing else: a trailing slash is refused at start-up, because it would match nothing and say so only on somebody's screen. `*` means any page on the web — reasonable for a public catalogue, never reasonable together with `FDT_STATION_AUTH_REQUIRED=false` |
 | `FDT_STATION_DATABASE_URL` | the profile's | SQLite in `personal`, PostgreSQL otherwise |
 | `FDT_STATION_DEPOT_URL` | none | the Train Depot trains are resolved against (ADR-029) |
 | `FDT_STATION_CONTRACTS_DIR` | found | where `fdt-commons` is; the station will not start without it |

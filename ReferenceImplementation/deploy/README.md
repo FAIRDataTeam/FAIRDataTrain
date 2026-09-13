@@ -142,6 +142,22 @@ publishes, so the address a component advertises and the socket it is served on 
 apart. Nothing else knows a port: the entrypoint reads it, the nginx config is substituted from
 it, and the compose's published-ports block is checked against it.
 
+## Why a console can read a station at all
+
+Every console is served from one origin and reads components on others — the Handler's console
+reads a Handler, a registry and a Depot on one page — so it can never be same-origin with all of
+them. A browser discards each of those responses unless the component names the page's origin in
+a header, and a console with no header to go on reports that the component did not answer.
+
+So every profile names the two origins this testbed serves consoles from: the consoles' own
+container on 8405, and `npm run dev` on 5173. Nothing is allowed by default anywhere in this
+ecosystem (Q23) — machine clients are unaffected, because the same-origin policy is a browser's
+rule about pages rather than a server's rule about clients.
+
+This is worth knowing because no test could have found it: a test client has no same-origin
+policy, so every suite passed while every console, opened in a browser, was refused.
+`tests/e2e/test_browser.py` now sends the header a browser sends.
+
 ## Ports
 
 8400–8405, chosen because 8000, 8080, 8081 and 5173 are what everything else on a developer's
