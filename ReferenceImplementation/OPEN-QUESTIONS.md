@@ -499,14 +499,22 @@ discovery patterns that have nothing to send.
 
 ### Q17 — Do the component repositories get renamed? — **ANSWERED 13 Sep 2026**
 
-**Decided: rename both.** `TrainDepot` → `TrainDepot`, and `FDTRegistry` →
+**Decided: rename both.** `TrainGarage` → **`TrainDepot`**, and `StationDirectory` →
 **`FDTRegistry`** — a name that does not say "station", since it indexes trains and whatever
 else a publishing FDP defines. Done while both are private and nothing external clones them;
 GitHub redirects the old names, so it is not destructive.
 
+**Implemented.** Both repositories are renamed, with the submodule paths, section names,
+gitdirs, remotes and the Makefile following. The Python package followed too in WP-5.3:
+`fdt_directory` → `fdt_registry`, `fdt-directory` → `fdt-registry`. A package named after the
+old product is the same defect as a class named after it — and the rename had already left one
+stale editable install behind, which turned fourteen cross-component tests into two skips while
+both suites reported success. Every component's guard now makes a missing sibling an error, and
+each guard has a test that watches it fire.
+
 **The question.** ADR-029 renamed the Train Garage to the Train Depot and the rename has landed
 in FDT-O, `fdt-commons` and both components. Two GitHub repositories still carry the old names:
-`FAIRDataTeam/TrainDepot`, and `FAIRDataTeam/FDTRegistry` — which ADR-029 also makes
+`FAIRDataTeam/TrainGarage`, and `FAIRDataTeam/StationDirectory` — which ADR-029 also makes
 inaccurate, since the registry indexes trains as well as stations.
 
 **Why it is yours.** Renaming a repository in the `FAIRDataTeam` organisation changes clone

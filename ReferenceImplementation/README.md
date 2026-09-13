@@ -17,12 +17,12 @@ make check          # the gate: every contract validator in fdt-commons and FDT-
 
 | Submodule | What it is | Status |
 |---|---|---|
-| [`fdt-commons`](https://github.com/FAIRDataTeam/fdt-commons) | **the contracts**: vocabularies, SHACL shapes, JSON Schemas, JSON-LD contexts, the visit protocol, the fixtures | v0.19.0 — twelve validation passes |
+| [`fdt-commons`](https://github.com/FAIRDataTeam/fdt-commons) | **the contracts**: vocabularies, SHACL shapes, JSON Schemas, JSON-LD contexts, the visit protocol, the fixtures | v0.20.0 — twelve validation passes |
 | [`FDT-O`](https://github.com/FAIRDataTeam/FDT-O) | the ontology: what a train, payload, hosted dataset, dataset part, catalogue, controller and station type *are* | v4.0.0 on branch `fdt-o-v2` ([PR #1](https://github.com/FAIRDataTeam/FDT-O/pull/1)) |
-| [`FAIRDataStation-py`](https://github.com/FAIRDataTeam/FAIRDataStation-py) | the station: PEP 1–3, agreements, metadata, adapters | M1 done — a visit runs through PEP 1–3, 199 tests |
-| [`FAIRDataTrainHandler`](https://github.com/FAIRDataTeam/FAIRDataTrainHandler) | the Handler: run model, orchestration, conditions, failure policy | M1 done — `fdt-handler run plan.jsonld`, 64 tests |
+| [`FAIRDataStation-py`](https://github.com/FAIRDataTeam/FAIRDataStation-py) | the station: PEP 1–3, agreements, metadata, adapters | M1 done; publishes its catalogue and data shapes — 210 tests |
+| [`FAIRDataTrainHandler`](https://github.com/FAIRDataTeam/FAIRDataTrainHandler) | the Handler: run model, orchestration, conditions, failure policy | M1 done; resolves stations from a registry and trains from their Depot — 72 tests |
 | [`IndividualGateway`](https://github.com/FAIRDataTeam/IndividualGateway) | the data controller's agent across stations | skeleton |
-| [`FDTRegistry`](https://github.com/FAIRDataTeam/FDTRegistry) | the **metadata registry**: harvests and indexes what Depots and Stations publish, FDP-Index-shaped; not a trust anchor (ADR-029). Its query surface is ADR-030 — answer a train's data requirement by structural coverage | skeleton — **next (WP-5.3)** |
+| [`FDTRegistry`](https://github.com/FAIRDataTeam/FDTRegistry) | the **metadata registry**: harvests and indexes what Depots and Stations publish; not a trust anchor (ADR-029). Answers a train's data requirement by structural coverage and names the property a near-matching station was missing (ADR-030) | **v0.1.0** — 28 tests |
 | [`TrainDepot`](https://github.com/FAIRDataTeam/TrainDepot) | the **Train Depot**: the authority for a train — payload bytes, digests it computes rather than repeats, parameters, the input requirement, declared output, the owner's offer and public keys (ADR-029) | **v0.1.0** — 35 tests |
 | [`FDTConsole`](https://github.com/FAIRDataTeam/FDTConsole) | one front-end, three role-based apps | design system and generated contract types; no screens yet |
 
@@ -94,8 +94,9 @@ test. The order and the exit criteria are fixed; durations are not.
 
 [`task.md`](task.md) is the tracked roadmap: the plan's work packages, with a box checked only
 when its acceptance criterion has been run. **M0 and M1 are done. M5 — the testbed — is in
-progress: the Train Depot runs, FDT-O is at v4, and station selection has a specified relation
-behind it.** Next: WP-5.3, the metadata registry.
+progress: a Train Depot, a metadata registry and a station now run against each other under a
+Handler, and `make e2e` chooses where to send a visit by asking which stations hold the data.**
+Next: WP-5.4, several stations in two networks that differ on whether a machine may decide.
 
 Decisions and their conservative defaults are in [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md);
 contract defects and what closed them are in `fdt-commons/FINDINGS.md`, by number; dated audits

@@ -8,7 +8,7 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** **WP-5.3 — the metadata registry** (`FDTRegistry`), whose query surface WP-5.0 just specified and implemented: harvest what Depots and Stations publish, index the shapes, answer a plan's data requirement by structural coverage, and name the property a near-matching station was missing. Then WP-5.4 (several stations, in two networks that differ on whether a machine may decide) and WP-5.5 (the consoles). The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always. WP-5.0, WP-5.1 and WP-5.2 are done: FDT-O is at 4.0.0, `fdt-commons` at 0.19.0, `make e2e` runs the Handler, a station and a Train Depot against each other with the payload digest traced from bytes to checkpoint, and station selection has a specified, executed relation behind it instead of a string nothing read.
+**Next:** **WP-5.4 — several stations, in two networks that differ on whether a machine may decide** (ADR-032), then WP-5.5 (the consoles). WP-5.0, 5.1, 5.2 and 5.3 are done: FDT-O is at 4.0.0, a train declares the data it needs, a Depot is the authority for it, a registry answers which stations hold it and names the property the others were missing, and `make e2e` runs all four components against each other. The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always.
 
 | | | |
 |---|---|---|
@@ -218,14 +218,45 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       it is the new **pass 11**, which counts the focus nodes every shape selects — and which
       checks its own detector against a shape built to come out dead, so "0 dead" cannot itself
       be vacuous. 20 mutations, 0 survivors, against a green control run.
-- [ ] **WP-5.3 — Metadata registry v0 (`FDTRegistry`)** · 5.0, 5.2 · L
-      Harvests and indexes what Depots and Stations publish, FDP-Index-shaped. **Not a trust
-      anchor** — membership is proven by a credential, not by an index entry. Shows harvest time
-      rather than implying currency. Its query surface is **ADR-030**: index the shapes stations
-      publish, answer a train's data requirement by **structural coverage**, and say which
-      required property a station was missing. *Acceptance: a Handler resolves a plan's stations
-      and trains from the registry instead of the fixture catalogue, and a station that nearly
-      matches is excluded with the missing property named.*
+- [x] **WP-5.3 — Metadata registry v0 (`FDTRegistry`)** · 5.0, 5.2 · L — **done 13 Sep 2026.**
+      `fdt-registry` 0.1.0, `fdt-commons` 0.20.0. Both clauses of the criterion run in
+      `make e2e` with four real components and no fakes: a Handler resolves the target set from
+      the registry, takes the dispatch endpoint the chosen station published, and runs the visit
+      through to a delivered envelope; the near-miss station is excluded and the reason names
+      `subjectCount`.
+      **Trains still come from their Depot.** The registry indexes them too and answering from
+      it would have been one line — the line that puts a harvester on the path of the digest a
+      station agrees to run. Discovery is a hint, a train's identity is an authority question,
+      and ADR-029 keeps them apart; `RegistryCatalogue` wraps `DepotCatalogue` rather than
+      replacing it.
+      **The coverage relation is not reimplemented.** The registry loads
+      `fdt-commons/tools/coverage.py` — the module `make check` runs over the fixture corpus —
+      the way the station loads `tools/inspection.py`. Two implementations of one definition
+      would make the contracts repository's copy a second opinion, and structural coverage has
+      exactly the edge cases where two opinions differ quietly.
+      **Three things are contract, not convention**, because each fails silently: the registry
+      declares `trustAnchor: false` in its own self-description; every row and every answer
+      carries when its source was last harvested and whether that attempt succeeded; and a
+      source that cannot be reached keeps its row with the error on it, because "the station is
+      down" and "the station does not exist" are different problems and dropping the row turns
+      the first into the second. A search with no data requirement is refused rather than
+      answered — it is `fdt-run:targetQuery` in new clothes, resolving to every station that
+      could be *visited*.
+      **Two defects surfaced, both from making a consumer use what a publisher published.** The
+      Depot served a train's input requirement and not the shapes it names, so a registry could
+      not resolve them and the train would have matched every station rather than none
+      (`GET /trains/{train}/input-shapes`). And **the station published a dispatch endpoint it
+      did not serve**: `base_url + "/fdt/v1"` while the router was mounted at the root, so its
+      own minted visit IRIs and its advertised address disagreed. Nothing had caught it because
+      every consumer was handed the URL out of band — the Handler's fixtures carry an
+      `endpoints` override. The first Handler to take the endpoint from the registry pushed a
+      visit to it and got a 404 from the station's own advertised address.
+      Along the way the station gained `GET /catalogue` and `GET /shapes` (a WP-2.5 down
+      payment): what it holds, on whose terms, with parts, and the shapes its data conforms to —
+      conforming to the contracts **standalone**, which is how a registry receives it. The first
+      draft of the catalogue published every policy that pointed at a dataset, which is other
+      consumers' requests and the evidence they submitted; the standalone conformance check
+      found it.
 - [ ] **WP-5.4 — Several stations, configured and running** · 1.4 · M
       More than one station with real data sources, in at least two networks — and the two
       networks differ in **whether automated authorisation is permitted** (ADR-032), so both

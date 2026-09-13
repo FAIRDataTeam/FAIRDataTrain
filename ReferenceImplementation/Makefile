@@ -74,16 +74,27 @@ generate: venv  ## generate models and types from the contracts (WP-0.3)
 # Each component has its own environment with its own dependencies — the checker venv holds
 # only pySHACL, rdflib and jsonschema, so running a component's tests from it fails on the
 # first import. Build per-component venvs here exactly as CI does.
+#
+# Some components are tested against their real siblings rather than against fakes, because a
+# component and its own fake always agree. The `case` below says which, and FDT_REQUIRE_SIBLINGS
+# makes a missing one an error instead of a skip: renaming TrainGarage to TrainDepot once turned
+# fourteen cross-component tests into two skips, and both components went on reporting success.
 .PHONY: test
 test:  ## run each component's tests, lint and types, in its own environment
 	@for c in $(PY_COMPONENTS); do \
 	  echo "── $$c ──"; \
+	  siblings=""; \
+	  case $$c in \
+	    FAIRDataStation-py) siblings="TrainDepot" ;; \
+	    FAIRDataTrainHandler) siblings="TrainDepot FAIRDataStation-py FDTRegistry" ;; \
+	    FDTRegistry) siblings="TrainDepot FAIRDataStation-py" ;; \
+	  esac; \
+	  args=""; for s in $$siblings; do args="$$args -e $(ROOT)/$$s"; done; \
 	  ( cd $(ROOT)/$$c \
 	    && uv venv --quiet --allow-existing --python 3.12 .venv \
 	    && uv pip install --quiet --python .venv/bin/python -e ".[dev]" \
-	    && { [ "$$c" = TrainDepot ] || uv pip install --quiet --python .venv/bin/python \
-	         -e $(ROOT)/TrainDepot; } \
-	    && FDT_REQUIRE_DEPOT=1 .venv/bin/pytest -q \
+	    && { [ -z "$$args" ] || uv pip install --quiet --python .venv/bin/python $$args; } \
+	    && FDT_REQUIRE_SIBLINGS=1 FDT_REQUIRE_DEPOT=1 .venv/bin/pytest -q \
 	    && .venv/bin/ruff check src tests \
 	    && .venv/bin/mypy --strict src ) || exit 1; \
 	done
@@ -103,7 +114,8 @@ e2e:  ## run the milestone scenarios with the real components against each other
 	@echo "── end-to-end ───────────────────────────────────────────────"
 	@uv venv --quiet --allow-existing --python 3.12 $(E2E)
 	@uv pip install --quiet --python $(E2E)/bin/python pytest \
-	  -e $(ROOT)/FAIRDataStation-py -e $(ROOT)/FAIRDataTrainHandler -e $(ROOT)/TrainDepot
+	  -e $(ROOT)/FAIRDataStation-py -e $(ROOT)/FAIRDataTrainHandler -e $(ROOT)/TrainDepot \
+	  -e $(ROOT)/FDTRegistry
 	@$(E2E)/bin/pytest -q $(ROOT)/tests/e2e
 	@echo
 	@echo "  M1 one visit ✓ · M2 fan-out and governance · M3 multi-hop · M4 composition"
