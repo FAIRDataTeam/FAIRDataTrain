@@ -293,8 +293,44 @@ rather than being told immediately. That is latency for the refused party, not a
 about them by a machine. Marked in `fdt_station/policy/evaluator.py` (`_authorisation`) and in
 `fdt-p:SemiAutomated`'s own definition.
 
-### Q21 — Who may change how a station is configured? — **PLACEHOLDER IN PLACE 13 Sep 2026**
-**Blocks:** nothing today; WP-2.4 is where it belongs.
+### Q21 — Who may act, and on whose behalf? — **ANSWERED 13 Sep 2026**
+**Blocked:** the Depot's publish and withdraw surface, station S4 and S5, H2's dispatch step.
+**Answered** in an interview on 13 September 2026; drafted as **ADR-035** (standing at a station)
+and **ADR-036** (a train's three parties and the Depot's write surface), both *Proposed* and
+awaiting acceptance. Twelve answers, in brief:
+
+1. **Identity has two sources, split by the question.** The network's trusted issuer for anything
+   crossing organisations — consumer, controller, train creator, train owner; a credential
+   configured out of band for whoever administers a component, because "who may restart this
+   station" is not a network concept.
+2. **Operator, controller and auditor are roles**, and one principal may hold several. Separation
+   of duties is a deployment policy, not a law of the software; the *surfaces* stay separate.
+3. **A visit may be dispatched under either** an organisation credential naming a human agent or
+   a person's credential with an affiliation claim, and the station **records what was
+   presented**, verbatim — ADR-026's rule one level up.
+4. **S4 and S5 belong to the controller**, for their own datasets only. An operator sees *that*
+   conditions exist and *that* agreements were reached, not what they say.
+5. **A controller may narrow the decision mode for their own data and never widen it** —
+   ADR-034's rule extended one step: network ≥ station ≥ controller.
+6. **Revocation does not reach into a running visit.** Queued approvals wait for whoever holds
+   the role now, keeping the rule they arrived under.
+7. **A train has three parties**: Train Creator (wrote it), Train Owner (took it and sends it to
+   stations — the train visits on their behalf), and the Depot administrator.
+8. **`fdt-o:TrainCreator`** is added to FDT-O, symmetrical with `fdt-o:TrainOwner` and
+   `fdt-o:StationOwner`; the backwards `dct:creator` restriction is fixed with it (finding 68).
+9. **A train is published by its creator, signed** with a key in the Depot's JWKS. The Depot
+   verifies a signature and is not an identity provider.
+10. **The creator registers a usage licence** — an `odrl:Offer` over the train as an asset — and
+    taking the train is evaluated against it by the Depot, which issues a creator–owner
+    agreement. No station checks it: it is between creator and owner.
+11. **Withdrawal leaves the train addressable**, marked, with a reason and a time, so a finished
+    run stays explicable. Creator or Depot administrator may withdraw.
+12. **Still open**: delegation (may a controller delegate to a person or to the Individual
+    Gateway?), the auditor as a party with a read surface, and whether an owner may publish a
+    parametrised *instance* of a train type.
+
+#### What the placeholder was, before the interview
+
 
 The station now has an admin API (`station-admin-api.yaml`) with one writable setting, and no
 identity model to say who may use it. The visit protocol's tokens answer a different question —

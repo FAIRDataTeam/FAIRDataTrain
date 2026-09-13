@@ -57,6 +57,9 @@ decision interview of 13 September 2026, which closed every question blocking M2
 | [**031**](ADR-031-credentials-and-eligibility-evidence.md) | A credential proves what metadata only names | **Accepted**, 13 September 2026 |
 | [**032**](ADR-032-when-a-machine-may-not-decide.md) | Where a machine may not grant, it may not refuse either | **Accepted**, 13 September 2026 |
 | [**033**](ADR-033-dataset-parts.md) | A controller may offer part of a dataset | **Accepted**, 13 September 2026 |
+| [**034**](ADR-034-run-modes-and-the-station-decision-mode.md) | Run modes supply defaults; a station's decision mode narrows, never widens | **Accepted**, 13 September 2026 |
+| [**035**](ADR-035-standing-at-a-station.md) | Standing: who may act at a station, and on whose behalf | **Accepted**, 13 September 2026 |
+| [**036**](ADR-036-train-creator-train-owner-and-the-depot.md) | A train's three parties, and what a Depot may be asked to do | **Accepted**, 13 September 2026 |
 
 ## The rule
 
