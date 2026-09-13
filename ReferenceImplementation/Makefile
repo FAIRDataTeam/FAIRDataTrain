@@ -17,6 +17,11 @@ CONSOLE   := $(ROOT)/FDTConsole
 
 PY_COMPONENTS := FAIRDataStation-py FAIRDataTrainHandler IndividualGateway FDTRegistry TrainDepot
 
+# `deploy/testbed.py` imports nothing but the standard library, on purpose: it is the one thing
+# that has to run before any environment has been built, and under Docker it also runs inside
+# the images. Any python3 on the machine will do.
+PY_HOST := python3
+
 # The shapes constrain terms the ontology declares, and sh:class follows rdfs:subClassOf*
 # in the data graph. Point the fdt-commons checker at the merged ontology explicitly rather
 # than letting it guess, so a missing ontology is an error and not a quiet false pass.
@@ -26,7 +31,7 @@ export FDT_O_ONTOLOGY := $(FDTO)/ontology/fdt-o.ttl
 help:  ## show this help
 	@echo "FAIR Data Train — reference implementation"
 	@echo
-	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
+	@grep -hE '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 	  | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
 	@echo
 	@echo "Start with: make submodules && make check"
@@ -121,13 +126,34 @@ e2e:  ## run the milestone scenarios with the real components against each other
 	@echo
 	@echo "  M1 one visit ✓ · M2 fan-out and governance · M3 multi-hop · M4 composition"
 
+# The testbed. Two ways to run it, one description of what it is: `deploy/testbed.py` says
+# what the components are and how each is started, and the compose services run that rather
+# than repeating it in YAML.
+COMPOSE := docker compose -f $(ROOT)/deploy/compose.yaml
+CONSOLES := http://localhost:8405
+
 .PHONY: up
-up:  ## bring up the testbed: two stations, a Depot, a registry and a Handler
-	@python3 deploy/testbed.py up
+up:  ## bring the testbed up in Docker: two stations, a Depot, a registry, a Handler, consoles
+	@$(COMPOSE) up --build --detach
+	@$(COMPOSE) wait seed >/dev/null 2>&1 || true
+	@$(COMPOSE) logs --no-log-prefix seed
+	@$(PY_HOST) deploy/testbed.py ready --consoles $(CONSOLES)
+
+.PHONY: down
+down:  ## stop the testbed and remove its containers
+	@$(COMPOSE) down --remove-orphans
+
+.PHONY: logs
+logs:  ## follow the testbed's logs
+	@$(COMPOSE) logs --follow
+
+.PHONY: up-processes
+up-processes:  ## the same testbed as processes out of the checkout, for changing a component
+	@$(PY_HOST) deploy/testbed.py up
 
 .PHONY: status
-status:  ## is the testbed answering?
-	@python3 deploy/testbed.py status
+status:  ## is the testbed answering, whichever way it was started?
+	@$(PY_HOST) deploy/testbed.py status
 
 .PHONY: clean
 clean:  ## remove the checker virtualenv

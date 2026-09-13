@@ -1,13 +1,14 @@
 # Running the testbed
 
 ```
-make up          # two stations, a Depot, a registry, a Handler — and one seeded approval
+make up          # build the images and bring it all up in Docker
 make status      # is each one answering, and is the thing answering ours?
+make down        # stop it
+make logs        # follow everything
 ```
 
-Then, in `FDTConsole/`, `npm run dev` and open the URLs `make up` prints.
-
-`make up` needs each component's `.venv`, which `make test` builds. Run it once first.
+Then open **<http://localhost:8405>** — the consoles are in there too, so Docker is the only
+thing you need installed.
 
 ## What comes up, and why each one is here
 
@@ -18,13 +19,16 @@ Then, in `FDTConsole/`, `npm run dev` and open the URLs `make up` prints.
 | **depot** | 8402 | the authority for a train (ADR-029): the concrete class, the parameters, the input requirement, and the payload digest a station checks at PEP 1 |
 | **registry** | 8403 | an index of what the others publish, harvested once at start-up. Explicitly **not** a trust anchor |
 | **handler** | 8404 | drives `plan-gene-disease-single.jsonld` against the UT station on startup, so there is a finished run to watch |
+| **consoles** | 8405 | all six bundles, built and served as files |
 
 Two stations rather than one is the point. With one, the testbed shows the automated path and
 quietly implies it is the only one; the pair is what makes ADR-032 visible — the same request
 granted by a machine in one network and, in the other, neither granted nor refused by one.
 
-The runner seeds **one visit at Oosterlicht under the Oost network**, which is why console S3
-has something in it. Without it the approvals queue is empty and ADR-032 is a paragraph.
+The `seed` container does the two things that have to happen once everything is up: the
+registry's first harvest, and **one visit at Oosterlicht under the Oost network**, which is why
+console S3 has something in it. Without it the approvals queue is empty and ADR-032 is a
+paragraph. It runs `deploy/testbed.py seed` and exits.
 
 ## Credentials
 
@@ -39,38 +43,114 @@ Three parties ask three different things of a station, and each has its own cred
 
 Neither is a network credential and neither grants anything about data.
 
-## Ports
+## The images
 
-8400–8404, chosen because 8000/8080/8081 are what everything else on a developer's machine
-already wants. Each instance's port lives in its own profile as `FDT_TESTBED_PORT`, beside the
-`base_url` it publishes, so the address a station advertises and the socket it is served on
-cannot drift apart. `tests/e2e/test_testbed.py` checks that they agree.
+One Dockerfile, built into the repository `fdt_testbed/*` — `docker images 'fdt_testbed/*'` is
+the set, and `make down` removes the containers and touches nothing else on the machine.
+
+| image | what it is |
+|---|---|
+| `fdt_testbed/station:dev` | `FAIRDataStation-py`. **Both** stations run it; the only difference between them is which profile they are handed |
+| `fdt_testbed/depot:dev` | `TrainDepot` |
+| `fdt_testbed/registry:dev` | `FDTRegistry` |
+| `fdt_testbed/handler:dev` | `FAIRDataTrainHandler` |
+| `fdt_testbed/console:dev` | the consoles, built with node and served by nginx — the toolchain does not survive into the running image |
+| `fdt_testbed/tools:dev` | the network namespace, and the seeding |
+
+The build context is the whole metaproject, because an image needs both a component and the
+contracts it validates against: a station that shipped without `fdt-commons` would start and
+then refuse every visit it was given, which is a failure that looks like a protocol error and is
+a packaging one. **The image reproduces the checkout's layout** — `/fdt/fdt-commons`,
+`/fdt/FDT-O`, `/fdt/deploy` — so a profile is the same file in a container and out of one.
+
+Every container runs as a user that could not administer the machine it is on.
+
+These are not the deployment profiles. Those are WP-4.3's, there are three of them, and they
+differ in exactly the ways a testbed does not have to care about: no volumes here, no database,
+no restart policy. `make down && make up` is a clean testbed, and a component that dies stays
+dead so that you can see that it did.
+
+## One address space, and why
+
+Every service shares the `net` container's network stack, so `localhost:8400` inside any
+container is `localhost:8400` on the host. That is not a convenience. It is what makes the
+addresses these components publish about themselves *true*.
+
+A registry indexes what a station and a Depot published, **including where they are**, and a
+console follows what the registry indexed: the Handler console's H1 resolves a train by fetching
+the Depot URL the registry recorded, because the Depot is the authority and the index is an
+index (ADR-029). That fetch is made by a browser, on the host. Under ordinary compose networking
+the registry would have to harvest `http://depot:8402` — an address no browser can reach — so
+either the index would be full of URLs that work in one place only, or every component would
+have to advertise one address and be harvested at another.
+
+The cost is that `ports:` may appear on `net` and nowhere else, which is why every published
+port is in one block of `compose.yaml`. `tests/e2e/test_compose.py` checks that block against
+the profiles, and checks that each one is published to **this machine and no further**: the
+stations run with `FDT_STATION_AUTH_REQUIRED=false`, which is a deliberate act of configuration
+for a testbed and also a door that must not open onto a café's wifi.
+
+## Changing a component
+
+```
+make up-processes     # the same testbed, straight out of the checkout
+```
+
+Then `npm run dev` in `FDTConsole/`. This is the short loop: a container build stands between
+every edit and the screen, which is the opposite of what a testbed is for. It needs each
+component's `.venv`, which `make test` builds — run that once first.
+
+The addresses are identical either way, so `make status` works against whichever is running,
+and a console you already have open does not need to be told anything new.
+
+## One description, two ways to run it
+
+`deploy/testbed.py` says what the testbed is made of: which components, from which profiles, on
+which ports, with which identity each must publish. The compose does not repeat any of it. Each
+service runs `testbed.py exec <name>` and is health-checked with `testbed.py health <name>`, so
+the containers and the processes are two ways of running one description rather than two
+descriptions that agree for a while.
+
+`tests/e2e/test_compose.py` is what keeps it that way, and it is worth knowing what it found:
+the first run of the compose bound every component to the loopback address *inside its own
+container*, where the health check — which asks 127.0.0.1 from inside that same namespace —
+reported all five healthy while nothing on the host could reach any of them. A container can
+always talk to itself. Only a question asked from outside can tell the difference, which is why
+`make up` ends by asking one.
 
 ## Profiles
 
-`deploy/profiles/*.env` — `KEY=value`, read by `deploy/env.py` and handed to each subprocess as
-its environment. **A value is taken verbatim to the end of the line**: no quote stripping, no
-`$VAR`, and `#` is not a comment inside a value. Every one of those conveniences would corrupt a
-profile here — half the IRIs in this ecosystem carry a fragment, and
-`https://w3id.org/fdt/network#StationRole` truncated at `#` is a different IRI that still parses.
+`deploy/profiles/*.env` — `KEY=value`, read by `deploy/env.py`. **A value is taken verbatim to
+the end of the line**: no quote stripping, no `$VAR`, and `#` is not a comment inside a value.
+Every one of those conveniences would corrupt a profile here — half the IRIs in this ecosystem
+carry a fragment, and `https://w3id.org/fdt/network#StationRole` truncated at `#` is a different
+IRI that still parses.
 
 They are read by each component's **own** settings class, not by a format of the testbed's own:
-a station that behaved differently under `make up` than under its own settings file would be
+a station that behaved differently under the testbed than under its own settings file would be
 demonstrating the testbed rather than the station. `tests/e2e/test_testbed.py` loads every
 profile through `StationSettings`, `RegistrySettings` and `DepotSettings`, so a renamed field
 fails in `make e2e` rather than in front of somebody who has just run `make up`.
 
-## Processes, not containers
+Under Docker the profiles are also read a second time, by compose's own `.env` parser, which has
+both of the conveniences listed above. The two agree today;
+`test_compose_reads_a_profile_exactly_as_the_runner_does` is what says so tomorrow. It needs
+Docker, and `FDT_REQUIRE_DOCKER=1` turns its skip into a failure.
 
-Every component is a Python package in this checkout with a `serve` command, so the shortest
-path from a working tree to something you can click on is to start five of them. Containers are
-a packaging question (WP-4.3) and would put a build between every edit and the browser, which is
-the opposite of what a testbed is for.
+Each instance's port lives in its own profile as `FDT_TESTBED_PORT`, beside the `base_url` it
+publishes, so the address a component advertises and the socket it is served on cannot drift
+apart. Nothing else knows a port: the entrypoint reads it, the nginx config is substituted from
+it, and the compose's published-ports block is checked against it.
+
+## Ports
+
+8400–8405, chosen because 8000, 8080, 8081 and 5173 are what everything else on a developer's
+machine already wants.
 
 ## What `make status` checks
 
 That each port answers **and that the thing answering is ours** — every component publishes its
 own IRI at `/`, and the check is a string search for it. This is not belt and braces: the first
 run of this script reported a station as healthy on port 8000, where there was no station. A
-Docker container somebody had left running answered, and the runner had asked only whether
-*something* did.
+container somebody had left running answered, and the runner had asked only whether *something*
+did.

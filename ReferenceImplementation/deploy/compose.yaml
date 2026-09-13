@@ -1,0 +1,253 @@
+# The FAIR Data Train testbed, as containers.
+#
+#     make up        build the images and bring it up
+#     make status    is each one answering, and is the thing answering ours?
+#     make down      stop it
+#
+# Two stations, a Train Depot, a metadata registry, a Train Handler and the consoles. Two
+# stations rather than one is the point: the University station's network permits a machine to
+# conclude a negotiation, and Oosterlicht is also in one that does not, where it decides nothing
+# in either direction and puts the case to a person (ADR-032). With one station the testbed
+# would show the automated path and quietly imply it was the only one.
+#
+# ── The project name ────────────────────────────────────────────────────────────────────────
+#
+# `fdt_testbed`, and lower case deliberately: Docker normalises a project name and an image
+# repository to lower case without saying so, so `FDT_testbed` here would become `fdt_testbed`
+# everywhere it is actually used, and the file would be naming something that does not exist.
+# This is the group the containers appear under, and `fdt_testbed/*` is the repository every
+# image is built into — `docker images fdt_testbed/*` is the set, and `make down` removes the
+# containers without touching anything else on the machine.
+#
+# ── One network namespace, and why ──────────────────────────────────────────────────────────
+#
+# Every service shares the `net` container's network stack, so `localhost:8400` inside any
+# container is `localhost:8400` on the host. That is not a convenience: it is what makes the
+# addresses these components publish about themselves *true*.
+#
+# A registry indexes what a station and a Depot published, including where they are, and a
+# console follows what the registry indexed — the Handler's H1 resolves a train by fetching the
+# Depot URL the registry recorded (ADR-029: the Depot is the authority, the index is an index).
+# That fetch is made by a browser, on the host. Under ordinary compose networking the registry
+# would have to harvest `http://depot:8402`, which is an address no browser can reach, so either
+# the index would be full of URLs that work only inside Docker or the components would have to
+# advertise one address and be harvested at another. One address space removes the choice, and
+# `deploy/profiles/*.env` is then the same file for containers and for processes.
+#
+# The cost is that `ports:` can only appear on `net`, which is why every published port is in
+# one block below. `tests/e2e/test_compose.py` checks that block against the profiles.
+#
+# ── What is not here ────────────────────────────────────────────────────────────────────────
+#
+# No volumes, no database, no restart policy. Every component holds its state in memory, so
+# `make down && make up` is a clean testbed and there is nothing to migrate; and a component
+# that dies should be visible as a component that died, not restarted until somebody notices the
+# logs. This is a testbed, not a deployment profile — those are WP-4.3's, and they are three,
+# and they differ in exactly the ways this one does not have to care about.
+
+name: fdt_testbed
+
+
+# Every Python component is built from one Dockerfile and started the same way: the runner is
+# told which component to become, and everything else — the port, the arguments, the identity to
+# check — comes from `deploy/profiles/`. Nothing about a component is written twice here.
+x-component: &component
+  build:
+    context: ..
+    dockerfile: deploy/docker/Dockerfile
+    target: component
+  network_mode: "service:net"
+  depends_on:
+    net:
+      condition: service_started
+  restart: "no"
+  stop_grace_period: 5s
+
+x-health: &health
+  interval: 3s
+  timeout: 10s
+  retries: 30
+  start_period: 5s
+
+
+services:
+
+  # ── the network namespace, and the only container that publishes a port ───────────────────
+  #
+  # It holds the testbed's addresses and does nothing else. Bound to 127.0.0.1 and not to every
+  # interface: the stations are configured with `FDT_STATION_AUTH_REQUIRED=false`, which is a
+  # deliberate act of configuration for a testbed and would be an open door on a network.
+  net:
+    image: fdt_testbed/tools:dev
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile
+      target: tools
+    command: ["sleep", "infinity"]
+    restart: "no"
+    ports:
+      - "127.0.0.1:8400:8400"   # station-ut
+      - "127.0.0.1:8401:8401"   # station-oosterlicht
+      - "127.0.0.1:8402:8402"   # depot
+      - "127.0.0.1:8403:8403"   # registry
+      - "127.0.0.1:8404:8404"   # handler
+      - "127.0.0.1:8405:8405"   # consoles
+
+  # ── the stations ──────────────────────────────────────────────────────────────────────────
+
+  station-ut:
+    <<: *component
+    image: fdt_testbed/station:dev
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile
+      target: component
+      args:
+        COMPONENT: FAIRDataStation-py
+    env_file: [profiles/station-ut.env]
+    command: ["python", "deploy/testbed.py", "exec", "station-ut", "--host", "0.0.0.0"]
+    healthcheck:
+      <<: *health
+      test: ["CMD", "python", "deploy/testbed.py", "health", "station-ut"]
+
+  # The same image, a different profile. That is the whole difference between them, and it is
+  # the difference the testbed exists to show.
+  station-oosterlicht:
+    <<: *component
+    image: fdt_testbed/station:dev
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile
+      target: component
+      args:
+        COMPONENT: FAIRDataStation-py
+    env_file: [profiles/station-oosterlicht.env]
+    command: ["python", "deploy/testbed.py", "exec", "station-oosterlicht", "--host", "0.0.0.0"]
+    healthcheck:
+      <<: *health
+      test: ["CMD", "python", "deploy/testbed.py", "health", "station-oosterlicht"]
+
+  # ── the Depot: the authority for a train (ADR-029) ────────────────────────────────────────
+
+  depot:
+    <<: *component
+    image: fdt_testbed/depot:dev
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile
+      target: component
+      args:
+        COMPONENT: TrainDepot
+    env_file: [profiles/depot.env]
+    command: ["python", "deploy/testbed.py", "exec", "depot", "--host", "0.0.0.0"]
+    healthcheck:
+      <<: *health
+      test: ["CMD", "python", "deploy/testbed.py", "health", "depot"]
+
+  # ── the registry: an index, and explicitly not a trust anchor (ADR-029) ────────────────────
+  #
+  # It waits for what it harvests. Not because it would fail otherwise — an unreachable source
+  # is a row that says so, which is the job — but because a testbed whose registry opens on two
+  # failed harvests teaches the wrong lesson on the first screen anybody looks at.
+
+  registry:
+    <<: *component
+    image: fdt_testbed/registry:dev
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile
+      target: component
+      args:
+        COMPONENT: FDTRegistry
+    env_file: [profiles/registry.env]
+    command: ["python", "deploy/testbed.py", "exec", "registry", "--host", "0.0.0.0"]
+    depends_on:
+      net:
+        condition: service_started
+      station-ut:
+        condition: service_healthy
+      station-oosterlicht:
+        condition: service_healthy
+      depot:
+        condition: service_healthy
+    healthcheck:
+      <<: *health
+      test: ["CMD", "python", "deploy/testbed.py", "health", "registry"]
+
+  # ── the Handler: it runs the M1 plan on startup, then serves what happened ─────────────────
+
+  handler:
+    <<: *component
+    image: fdt_testbed/handler:dev
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile
+      target: component
+      args:
+        COMPONENT: FAIRDataTrainHandler
+    env_file: [profiles/handler.env]
+    command: ["python", "deploy/testbed.py", "exec", "handler", "--host", "0.0.0.0"]
+    depends_on:
+      net:
+        condition: service_started
+      station-ut:
+        condition: service_healthy
+    healthcheck:
+      <<: *health
+      # The run has to finish before the Handler answers, so this one is given longer than the
+      # rest. A visit that crosses PEP 1, a negotiation, execution and PEP 3 is the thing being
+      # demonstrated; hurrying it here would only report it as broken.
+      start_period: 20s
+      retries: 60
+      test: ["CMD", "python", "deploy/testbed.py", "health", "handler"]
+
+  # ── the consoles ──────────────────────────────────────────────────────────────────────────
+  #
+  # Static bundles. They talk to whichever instance the URL names, which is why there is no
+  # configuration here and why `deploy/docker/console-index.html` is the page that carries the
+  # testbed's addresses.
+
+  consoles:
+    image: fdt_testbed/console:dev
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.console
+    network_mode: "service:net"
+    depends_on:
+      net:
+        condition: service_started
+    restart: "no"
+    # The port is the profile's, substituted into the nginx template at start-up — not written
+    # in this file, and not in the image either.
+    env_file: [profiles/console.env]
+    healthcheck:
+      <<: *health
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:$$FDT_TESTBED_PORT/"]
+
+  # ── and the two things that have to happen once it is all up ──────────────────────────────
+  #
+  # The registry's first harvest, and one visit at Oosterlicht under the network where a machine
+  # may not decide — which is what puts a case in console S3's queue. Without the second, S3 is
+  # an empty list and ADR-032 is a paragraph.
+  #
+  # It runs the same `_after_start` the process runner runs, and then exits. `make up` prints
+  # what it said.
+
+  seed:
+    image: fdt_testbed/tools:dev
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile
+      target: tools
+    network_mode: "service:net"
+    restart: "no"
+    command: ["python", "deploy/testbed.py", "seed"]
+    depends_on:
+      station-ut:
+        condition: service_healthy
+      station-oosterlicht:
+        condition: service_healthy
+      depot:
+        condition: service_healthy
+      registry:
+        condition: service_healthy

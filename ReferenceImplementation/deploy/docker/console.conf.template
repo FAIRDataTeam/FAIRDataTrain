@@ -1,0 +1,22 @@
+# The consoles, served as what they are: files.
+#
+# `${FDT_TESTBED_PORT}` is substituted at start-up from the instance's profile
+# (`deploy/profiles/console.env`), by the nginx image's own template mechanism, so the port is
+# not written here, in the compose, or in the Dockerfile. `NGINX_ENVSUBST_FILTER` restricts the
+# substitution to that one name: without it, `$uri` below would be replaced with nothing and
+# every request would 404 in a way that looks like a missing build.
+
+server {
+    listen       ${FDT_TESTBED_PORT};
+    server_name  _;
+    root         /usr/share/nginx/html;
+    index        index.html;
+
+    # No single-page fallback. Each console is its own entry point — `station.html`,
+    # `handler.html`, and so on — and routing inside one is in the fragment, which never reaches
+    # a server. A catch-all rewrite here would answer a typo'd path with somebody's console
+    # instead of a 404.
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}

@@ -1,0 +1,58 @@
+# syntax=docker/dockerfile:1.7
+#
+# The consoles: built with node, served as static files by nginx.
+#
+# This is the one image that is **not** how the consoles are developed. `npm run dev` on the
+# host, against `make up-processes`, is still the short loop — a container that rebuilds a
+# bundle between an edit and the screen is the opposite of what a testbed is for. This image is
+# here so that the ecosystem is something a person can open with Docker and nothing else
+# installed, which is the other thing a testbed is for.
+#
+# The toolchain does not survive into the running image. A console is a directory of files by
+# the time anybody loads it, and serving it with the build tool's preview server would keep a
+# compiler in the runtime to hand over bytes that were finished minutes earlier.
+
+# ── build ───────────────────────────────────────────────────────────────────────────────────
+#
+# `tools/vocabulary.mjs` resolves `fdt-commons/` and `FDT-O/` against the directory **above**
+# the console checkout, and `npm run generate` reads `../fdt-commons/protocol/openapi/…`. So the
+# layout here is the checkout's layout, exactly as in `Dockerfile`: no path is special-cased for
+# containers, because a path special-cased for containers is a path nothing else exercises.
+
+FROM node:20-slim AS build
+
+WORKDIR /fdt/FDTConsole
+
+# The lockfile first, so that a change to a console screen does not reinstall node_modules.
+COPY FDTConsole/package.json FDTConsole/package-lock.json ./
+RUN npm ci --no-fund --no-audit
+
+COPY fdt-commons/ /fdt/fdt-commons/
+COPY FDT-O/ /fdt/FDT-O/
+COPY FDTConsole/ ./
+
+# Generated, never committed and never hand-written: the TypeScript types come from the OpenAPI
+# documents and the vocabulary from the Turtle. An image that shipped a checked-in copy could
+# disagree with the contracts it was built beside, and nothing would say so.
+RUN npm run generate && npm run build
+
+# `vite build` has no `/` entry — each console is its own bundle, deliberately, because each is
+# its own deployment and a station operator never loads the Handler console. A person who opens
+# the testbed still has to land somewhere, and this is that somewhere: the testbed's front door,
+# not the product's.
+COPY deploy/docker/console-index.html dist/index.html
+
+
+# ── serve ───────────────────────────────────────────────────────────────────────────────────
+#
+# Unprivileged: like every other container here, it runs as a user that could not administer the
+# machine it is on. A testbed that ran as root would be teaching a deployment habit rather than
+# demonstrating a protocol.
+
+FROM nginxinc/nginx-unprivileged:alpine
+
+COPY --from=build /fdt/FDTConsole/dist /usr/share/nginx/html
+COPY deploy/docker/console.conf.template /etc/nginx/templates/default.conf.template
+
+# Substitute this name and no other: see the template.
+ENV NGINX_ENVSUBST_FILTER=FDT_TESTBED_PORT

@@ -8,7 +8,7 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** **M5's browser acceptance** — everything it needs is now runnable with `make up`, bar the half that waits on the Depot's publish and withdraw. Eleven screens now exist: station S1, S2, S3, S6, S7, S8 and the public page S9; Handler H1, H2, H3 and H4; plus the Depot and registry read consoles. What is left all writes or reads a controller's own policy *as that controller* — the Depot's writes, station S4 and S5, and H2's dispatch step — and the console has no controller identity to do it as: **Q21 now blocks four things**, and is the one decision standing between here and M5 closing. WP-5.0 through WP-5.4 are done — FDT-O is at 4.0.0, a train declares the data it needs, a Depot is the authority for it, a registry answers which stations hold it and names the property the others were missing, and two stations in two networks now show the difference between a decision a machine may take and one it may not. The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always.
+**Next:** **M5's browser acceptance** — `make up` now brings the whole ecosystem up in Docker, consoles included, so everything it needs is one command away bar the half that waits on the Depot's publish and withdraw. Eleven screens now exist: station S1, S2, S3, S6, S7, S8 and the public page S9; Handler H1, H2, H3 and H4; plus the Depot and registry read consoles. What is left all writes or reads a controller's own policy *as that controller* — the Depot's writes, station S4 and S5, and H2's dispatch step — and the console has no controller identity to do it as: **Q21 now blocks four things**, and is the one decision standing between here and M5 closing. WP-5.0 through WP-5.4 are done — FDT-O is at 4.0.0, a train declares the data it needs, a Depot is the authority for it, a registry answers which stations hold it and names the property the others were missing, and two stations in two networks now show the difference between a decision a machine may take and one it may not. The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always.
 
 | | | |
 |---|---|---|
@@ -338,20 +338,35 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       this" endpoint on that reasoning, and adding one from a console would be taking the
       decision in a worse place.
 
-      **There is now a testbed to run them against.** `make up` (`deploy/`) starts two stations,
-      a Depot, a registry and a Handler as processes, harvests the registry, and seeds one visit
-      at the second station **under a network that bars automated decisions** — which is what
-      puts anything in S3 and what makes ADR-032 visible rather than a paragraph. The two
-      stations differ on exactly that: with one, the testbed would show the automated path and
-      imply it was the only one. Bringing it up found **finding 67** — the registry's
-      `GET /sources`, the endpoint that explains an empty index, was itself empty before the
-      first harvest, while `GET /` reported three sources in the same breath.
+      **There is now a testbed to run them against.** `make up` (`deploy/`) brings up two
+      stations, a Depot, a registry, a Handler and the consoles as **one docker compose**, group
+      `fdt_testbed`, harvests the registry, and seeds one visit at the second station **under a
+      network that bars automated decisions** — which is what puts anything in S3 and what makes
+      ADR-032 visible rather than a paragraph. The two stations differ on exactly that: with one,
+      the testbed would show the automated path and imply it was the only one. Open
+      <http://localhost:8405> and Docker is the only thing needed. `make up-processes` runs the
+      same testbed out of the checkout, which is the short loop while changing a component.
+
+      `deploy/testbed.py` is the single description of what the testbed *is* — components,
+      profiles, ports, the identity each must publish — and the compose repeats none of it: each
+      service runs `testbed.py exec <name>` and is health-checked with `testbed.py health
+      <name>`. Every service shares one network namespace, so `localhost:8400` means the same
+      thing inside a container and in a browser; without that, the registry would have to index
+      Depot and station addresses that no browser can follow, and H1 resolves a train by
+      following exactly those (ADR-029).
+
+      Bringing it up found **finding 67** — the registry's `GET /sources`, the endpoint that
+      explains an empty index, was itself empty before the first harvest, while `GET /` reported
+      three sources in the same breath — and, in the compose, a defect every health check in the
+      testbed called healthy: each component bound the loopback address *inside its own network
+      namespace*, so all five reported up and nothing on the host could reach any of them. A
+      container can always talk to itself. `tests/e2e/test_compose.py` now asks from outside.
 
       **The acceptance run itself has not been done in a browser**, and its second half — a
       train published to the Depot and found through the registry — still needs the Depot
       writes. Its first half is covered from both ends by `tests/e2e/test_consoles.py`, which
       caught a bug shipped in the registry console the session before (finding 66), and the
-      testbed's own configuration by `tests/e2e/test_testbed.py`.)*
+      testbed's own configuration by `tests/e2e/test_testbed.py` and `test_compose.py`.)*
       **Handler client:** connect to `FDTRegistry` instances, select and parametrise trains,
       choose an itinerary strategy, watch the run.
       The **Individual Gateway is not in M5** — it lands in M2 with the controller workflow it

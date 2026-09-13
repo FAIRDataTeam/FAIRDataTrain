@@ -3,11 +3,17 @@
 This is what WP-5.5's acceptance criterion needs — "the M1 scenario watched end to end in a
 browser" — and until now there was no way to run one. `make up` printed "not implemented yet".
 
-**Processes, not containers.** Every component is a Python package in this checkout with a
-`serve` command and settings read from the environment, so the shortest path from a working
-tree to something you can click on is to start six of them. Containers are a packaging question
-(WP-4.3) and would put a build between every edit and the browser, which is the opposite of
-what a testbed is for.
+**Two ways to run it, one definition of what it is.** `deploy/compose.yaml` runs the testbed
+as containers, which is what you want when you are looking at the ecosystem; this file also
+starts the same components as processes out of the checkout (`make up-processes`), which is what
+you want when you are changing one, because a container build stands between every edit and the
+screen.
+
+Both go through `components()`. The compose does not repeat an argument, a port or an identity
+in YAML: each service runs `testbed.py exec <name>` and is health-checked with
+`testbed.py health <name>`, so there is one account of what this testbed is made of and both
+ways of running it are that account. Two accounts of one testbed disagree eventually, and the
+disagreement is found by somebody who has just run it.
 
 **Each instance is a profile in `deploy/profiles/`**, read by `deploy/env.py` and handed to the
 subprocess as its environment. Nothing is configured here in code: a station that behaved
@@ -21,6 +27,15 @@ with one station would show the automated path and quietly imply it was the only
 
 Ctrl-C stops everything. A component that dies is reported with its last output rather than
 leaving a URL in the table that answers nothing.
+
+Commands
+--------
+`up`      start the components as processes and hold them (`make up-processes`)
+`status`  is each one answering, and is the thing answering ours (`make status`)
+`ready`   wait for all of them, then print the table and the console URLs (`make up`)
+`seed`    the registry's first harvest and the one visit in a controller's queue
+`exec`    become one component — how each container starts
+`health`  is that one component ours — how each container is health-checked
 """
 
 from __future__ import annotations
@@ -45,12 +60,6 @@ ROOT = Path(__file__).resolve().parents[1]
 PROFILES = ROOT / "deploy" / "profiles"
 COMMONS = ROOT / "fdt-commons"
 ONTOLOGY = ROOT / "FDT-O"
-
-#: The plan the M1 scenario runs, and the one the acceptance criterion names.
-PLAN = COMMONS / "examples" / "plan-gene-disease-single.jsonld"
-
-STATION_IRI = "https://example.org/fdt/station/ut"
-HANDLER_IRI = "https://handler.cardionet.example/fdt/v1"
 
 
 @dataclass
@@ -124,38 +133,63 @@ _FROM_PROFILE = (
     ("registry.env", "registry", "FDTRegistry", "fdt_registry", "FDT_REGISTRY_IRI"),
 )
 
-HANDLER_PORT = 8404
+def components(*, run_plan: bool, host: str = "127.0.0.1") -> list[Component]:
+    """The testbed, in start order: what is harvested before what harvests it.
 
-
-def components(*, run_plan: bool) -> list[Component]:
-    """The testbed, in start order: what is harvested before what harvests it."""
+    `host` is what each component binds. The default is the loopback address, which is what a
+    process on a developer's machine should bind and never anything wider. A container binds
+    `0.0.0.0` instead — its own network namespace, which is the testbed's and nothing beyond it,
+    because `deploy/compose.yaml` publishes those ports on the loopback address only.
+    """
     listed = []
     for profile, name, package, module, identity_key in _FROM_PROFILE:
         values = read_profile(PROFILES / profile)
         port = int(values["FDT_TESTBED_PORT"])
         listed.append(Component(
             name=name, package=package, port=port,
-            argv=["-m", module, "serve", "--host", "127.0.0.1", "--port", str(port)],
+            argv=["-m", module, "serve", "--host", host, "--port", str(port)],
             identity=values[identity_key],
             profile=profile,
         ))
     if run_plan:
+        handler = read_profile(PROFILES / "handler.env")
         station = read_profile(PROFILES / "station-ut.env")
+        port = int(handler["FDT_TESTBED_PORT"])
         listed.append(Component(
-            name="handler", package="FAIRDataTrainHandler", port=HANDLER_PORT,
+            name="handler", package="FAIRDataTrainHandler", port=port,
             argv=[
-                "-m", "fdt_handler", "serve", str(PLAN),
+                "-m", "fdt_handler", "serve",
+                str(ROOT / handler["FDT_HANDLER_PLAN"]),
                 # The station's IRI is not resolvable; `--at` says where it actually is. The
                 # URL comes from the station's own profile, so the two cannot drift.
                 "--at", f"{station['FDT_STATION_IRI']}={station['FDT_STATION_BASE_URL']}",
-                "--handler", HANDLER_IRI,
-                "--agent", "m.devries@cardionet.example",
+                "--handler", handler["FDT_HANDLER_IRI"],
+                "--agent", handler["FDT_HANDLER_AGENT"],
                 "--contracts", str(COMMONS),
-                "--host", "127.0.0.1", "--port", str(HANDLER_PORT),
+                "--host", host, "--port", str(port),
             ],
-            identity=HANDLER_IRI,
+            identity=handler["FDT_HANDLER_IRI"],
+            # Read for the four values above rather than exported: a Handler has no settings
+            # class, because it is configured by the plan it is given and the arguments it is
+            # dispatched with.
         ))
     return listed
+
+
+def _named(name: str, *, host: str = "127.0.0.1") -> Component:
+    """The one component called `name`, or an error naming the ones there are.
+
+    `host` is passed through to `components()`, and dropping it here is not a cosmetic mistake:
+    the first run of the compose bound every component to the loopback address inside its
+    container, where the health check — which asks 127.0.0.1 from inside that same namespace —
+    reported all five healthy while nothing on the host could reach any of them. A container can
+    always talk to itself. `make up`'s own table is what noticed, because it asks from outside.
+    """
+    for component in components(run_plan=True, host=host):
+        if component.name == name:
+            return component
+    known = ", ".join(c.name for c in components(run_plan=True))
+    raise SystemExit(f"no component called {name!r} in this testbed. There is: {known}")
 
 
 def _free(port: int) -> bool:
@@ -343,9 +377,19 @@ def _after_start(component: Component) -> None:
                   f"{report.get('error')}", file=sys.stderr)
 
 
-def _print_urls(*, run_plan: bool) -> None:
-    print("\n  The consoles — `npm run dev` in FDTConsole, then:\n")
-    dev = "http://localhost:5173"
+def _print_urls(*, run_plan: bool, consoles: str | None = None) -> None:
+    """Where to look. `consoles` is the address the console bundles are served from.
+
+    Under the compose that is a container of this testbed's own, and the URLs below are live the
+    moment the table above is. Under the process runner it is `npm run dev` on the host, which
+    is a thing a person still has to start — so the line says so rather than printing an address
+    that answers nothing.
+    """
+    dev = consoles or "http://localhost:5173"
+    if consoles:
+        print(f"\n  The consoles — {consoles}, or straight to one of them:\n")
+    else:
+        print("\n  The consoles — `npm run dev` in FDTConsole, then:\n")
     where = {component.name: component.url for component in components(run_plan=True)}
     rows = [
         ("Station · UT", f"{dev}/station.html?station={where['station-ut']}"),
@@ -370,6 +414,74 @@ def _print_urls(*, run_plan: bool) -> None:
           " `testbed-controller`.")
 
 
+def exec_component(name: str, host: str) -> int:
+    """Become the named component: how each container in `deploy/compose.yaml` starts.
+
+    The compose says `testbed.py exec station-ut` and nothing else — no argument, no port, no
+    path. All of it comes from the same `components()` the process runner uses, and the
+    environment from the same `deploy/env.py` that reads the profile, so a container and a
+    process are two ways of running one description rather than two descriptions.
+
+    `os.execv` rather than a subprocess: the component becomes PID 1's process, so Docker's
+    stop signal reaches uvicorn instead of a wrapper that would have to forward it.
+    """
+    component = _named(name, host=host)
+    for key, value in _environment(component).items():
+        os.environ[key] = value
+    os.execv(sys.executable, [sys.executable, *component.argv])  # noqa: S606 — our own argv
+
+
+def health(name: str, timeout: float) -> int:
+    """Is the named component answering, and is the thing answering ours?
+
+    Each container's health check, and the same question `status` asks — one implementation.
+    A health check that asked only whether the port answered would pass for anything at all,
+    which is how the first run of this runner reported a stray container as a running station.
+    """
+    component = _named(name)
+    return 0 if _is_ours(component, _answers(component, timeout=timeout)) else 1
+
+
+def seed(timeout: float) -> int:
+    """The registry's first harvest, and the one visit in a controller's queue.
+
+    Run by the compose's `seed` service once every component is healthy, and by the process
+    runner inline as each one comes up. Both call `_after_start`, so what a container testbed
+    opens on and what a process testbed opens on are the same thing.
+    """
+    for component in components(run_plan=False):
+        if not _healthy(component, timeout=timeout):
+            print(f"  {component.name}: not answering at {component.url}; nothing seeded",
+                  file=sys.stderr)
+            return 1
+        _after_start(component)
+    return 0
+
+
+def ready(timeout: float, *, consoles: str | None) -> int:
+    """Wait for every component, then say where to look — `make up`, after the compose.
+
+    Waits rather than probes once. `docker compose up --detach` returns when the containers have
+    been created, which is a different fact from the ecosystem being up, and a table printed
+    between those two moments says `down` about components that are three seconds from healthy.
+    """
+    code = 0
+    for component in components(run_plan=True):
+        if _healthy(component, timeout=timeout):
+            print(f"  up    {component.name:<22} {component.url}")
+        else:
+            body = _answers(component, timeout=1.0)
+            if body is None:
+                print(f"  DOWN  {component.name:<22} {component.url}", file=sys.stderr)
+            else:
+                print(f"  SOMEBODY ELSE {component.name:<14} {component.url} — something is "
+                      f"listening but it does not publish {component.identity}", file=sys.stderr)
+            code = 1
+    if code == 0:
+        _print_urls(run_plan=True, consoles=consoles)
+    return code
+
+
 def status(timeout: float) -> int:
     """Is each component answering — and is the thing answering ours?"""
     code = 0
@@ -390,17 +502,35 @@ def status(timeout: float) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="testbed", description=__doc__)
-    parser.add_argument("command", nargs="?", default="up", choices=["up", "status"])
+    parser.add_argument("command", nargs="?", default="up",
+                        choices=["up", "status", "ready", "seed", "exec", "health"])
+    parser.add_argument("name", nargs="?",
+                        help="which component, for `exec` and `health`")
     parser.add_argument("--no-plan", action="store_true",
                         help="do not start the Handler, which drives the M1 plan on startup")
+    parser.add_argument("--host", default="127.0.0.1",
+                        help="the address `exec` binds (a container binds 0.0.0.0)")
+    parser.add_argument("--consoles",
+                        help="where the console bundles are served from, if they already are")
     parser.add_argument("--timeout", type=float, default=30.0,
                         help="seconds to wait for each component to answer")
     parser.add_argument("--logs", default=str(ROOT / ".testbed"),
                         help="where to write each component's output")
     args = parser.parse_args(argv)
 
+    if args.command in {"exec", "health"} and not args.name:
+        parser.error(f"`{args.command}` needs the name of a component")
+
     if args.command == "status":
         return status(args.timeout)
+    if args.command == "ready":
+        return ready(args.timeout, consoles=args.consoles)
+    if args.command == "seed":
+        return seed(args.timeout)
+    if args.command == "exec":
+        return exec_component(args.name, args.host)
+    if args.command == "health":
+        return health(args.name, args.timeout)
 
     print("  Bringing up the FDT testbed.\n")
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
