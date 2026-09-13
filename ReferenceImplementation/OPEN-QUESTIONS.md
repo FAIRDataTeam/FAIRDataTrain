@@ -270,6 +270,24 @@ includes a station rewriting its own history, that needs an append-only log or
 counter-signature by the train owner, and that is an ADR, not a shape. `AgreementShape` can
 express the digests today; it cannot express custody.
 
+### Q19 — What does a network that has not stated its regime mean? — **DEFAULT TAKEN 13 Sep 2026**
+**Blocks:** nothing. Taken so WP-5.4 could proceed; overturn it if you read it otherwise.
+
+`fdt-net:permitsAutomatedDecision` (ADR-032) says whether a station in a network may conclude a
+negotiation without a person. `fdts:NetworkShape` requires it, so a conforming description
+always says. **What should a station do with one that does not?**
+
+**Default taken: silence bars automated decisions.** The two errors are not symmetric. Reading
+silence as permission lets a machine take an adverse decision in a network whose regulator
+forbids it; reading it as refusal only queues work to people. A default that can only be wrong
+in the direction of a rights violation is not a default.
+
+The cost is real and worth stating: a deployment that upgrades without adding the flag finds
+every visit waiting for a person, which looks like a component failure rather than a
+configuration gap. That is the trade, and it is the one that fails safe. Marked in
+`fdt_station/policy/evaluator.py` (`_permits_automated_decision`) and in the vocabulary's own
+scope note.
+
 ### Q13 — Authorization modes — **ANSWERED; 1 and 4 on 12 Sep 2026, 2 and 3 on 13 Sep 2026**
 **Blocks:** WP-1.3 (the PDP's output), WP-2.4 (approval and the Gateway), WP-2.7 (S3, G4).
 
@@ -304,6 +322,21 @@ does the whole evaluation and **presents a recommendation with its evidence** �
 require a research purpose and the train declares a commercial purpose" — for a person to decide
 on: withholding the analysis because the machine may not decide would leave the human with less
 basis, not more independence. ADR-032.
+
+**Implemented (WP-5.4, `fdt-commons` 0.21.0, findings 56 and 57.)**
+`fdt-net:permitsAutomatedDecision` sits on the **network**, beside its trusted issuers — not on
+the offer and not on a participant's own membership record, because both of those are editable
+by the party the rule binds. The station reads it from its own membership configuration rather
+than from anything a caller sent. Where it is false, every adverse path in the evaluator ends in
+a recommendation instead of a decision, carrying the same justification object the machine would
+have acted on; a clean match ends there too, because granting is the mirror image and the same
+rule governs it. `agreement` records the mode, and where both rules apply the mode names the
+**network** — the one nobody in the loop may relax. Three counter-examples, and 13 mutations
+with no survivors.
+
+One defect surfaced on the way (finding 57): `fdt-p:requiresManualApproval` was consulted only
+on the branch where an eligibility fact was missing, so a controller who asked for a person got
+one exactly when the station was stuck and was ignored whenever the machine could decide.
 
 **3. What must be recorded when a human decided? DECIDED 13 Sep 2026: all four.** Beyond
 `approval.controller` and `approval.expiresAt`, which exist:

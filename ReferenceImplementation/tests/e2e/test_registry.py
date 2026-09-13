@@ -80,6 +80,7 @@ def _near_miss_settings() -> StationSettings:
             "governance_authority": "https://example.org/fdt/auth/hri-like",
             "governance_authority_name": "Governance authority",
             "admits_natural_persons": False,
+                "permits_automated_decision": True,
             "trusted_issuer": "https://idp.example.org/ls-aai-like",
             "role": "https://w3id.org/fdt/network#StationRole",
             "credential": "https://example.org/fdt/cred/westerlicht-hri",

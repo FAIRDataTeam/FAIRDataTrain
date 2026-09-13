@@ -8,7 +8,7 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** **WP-5.4 — several stations, in two networks that differ on whether a machine may decide** (ADR-032), then WP-5.5 (the consoles). WP-5.0, 5.1, 5.2 and 5.3 are done: FDT-O is at 4.0.0, a train declares the data it needs, a Depot is the authority for it, a registry answers which stations hold it and names the property the others were missing, and `make e2e` runs all four components against each other. The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always.
+**Next:** **WP-5.5 — the consoles**, which is what M5 exists to produce: the ecosystem as something you can watch rather than only something the tests assert. WP-5.0 through WP-5.4 are done — FDT-O is at 4.0.0, a train declares the data it needs, a Depot is the authority for it, a registry answers which stations hold it and names the property the others were missing, and two stations in two networks now show the difference between a decision a machine may take and one it may not. The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always.
 
 | | | |
 |---|---|---|
@@ -75,9 +75,14 @@ the fixture side; the code has not started.
       eligibility from usage (`fdt-p:constraintRole`), which is what makes `agr-9a01` derivable
       at all. Agreements are counter-signed by the train owner with a real Ed25519 key —
       **ADR-028, draft, needs your acceptance** (`docs/adr/`). Closes findings 19, 23–25, 28, 30.
-- [ ] **Q14-C — the auto-approving offer and the commercial request.** Q9 and finding 20: the
-      HealthAI request WP-1.3's second clause names does not exist, and `consumerType` has no
-      source. The M1 offer now covers the auto-approval half; this is the refusal half.
+- [x] **Q14-C — the auto-approving offer and the commercial request.** Q9 and finding 20.
+      **Done 13 Sep 2026** (`fdt-commons` 0.21.0): `ex:request/gd-commercial-2026` and its
+      twin under the other network, from `ex:party/healthai-like`. It fails two ways on
+      purpose, because the two are different in kind and a refusal has to name the right one —
+      a purpose CONSTRAINT the offer does not cover, which a different request could satisfy
+      tomorrow, and `odrl:sell`, which every one of these offers PROHIBITS and no approver may
+      waive. WP-1.3's second clause runs. The other half of Q14-C — where `consumerType` comes
+      from — is **ADR-031**, and is credentials rather than a fixture.
 
 ### Work packages
 
@@ -257,12 +262,41 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       draft of the catalogue published every policy that pointed at a dataset, which is other
       consumers' requests and the evidence they submitted; the standalone conformance check
       found it.
-- [ ] **WP-5.4 — Several stations, configured and running** · 1.4 · M
-      More than one station with real data sources, in at least two networks — and the two
-      networks differ in **whether automated authorisation is permitted** (ADR-032), so both
-      regimes are exercised rather than described. *Acceptance: the same train visits two
-      stations and gets different agreements; the same commercial request is refused
-      automatically in one network and produces a recommendation awaiting a human in the other.*
+- [x] **WP-5.4 — Several stations, configured and running** · 1.4 · M — **done 13 Sep 2026.**
+      `fdt-commons` 0.21.0. Both clauses run in `make e2e`, with two real stations and no
+      fakes: the same train at two stations comes away with two different agreements (k ≥ 5 and
+      k ≥ 10, because conditions belong to controllers and not to trains), and the same
+      commercial request is refused by a machine in `health-research-nl` and left waiting for a
+      person in `stroke-oost`, carrying the station's recommendation and the evidence behind it.
+      **ADR-032 in the contracts.** `fdt-net:permitsAutomatedDecision` sits on the **network**,
+      beside its trusted issuers — not on the offer and not on a participant's own membership,
+      because both are editable by the party the rule binds. One flag covers both directions:
+      an automated refusal is an adverse decision taken by a machine about somebody's request,
+      and reading the regime as "granting only" is the implementer's convenience rather than
+      the regulator's meaning. Where it is false the station does the whole evaluation anyway
+      and publishes what it concluded — withholding the analysis because the machine may not
+      decide would leave the person with less basis, not more independence.
+      An agreement now records **how it was reached** and, where a person decided, who they
+      were, under what authority, **what they were shown** (`fdt-p:shownAtDecision`, pinned by
+      digest), what was recommended and whether they followed it. **Findings 56 and 57** close
+      findings 26 and 27, open for twelve versions: an agreement could not say whether a human
+      was legally necessary or merely preferred, and nothing recorded what one was shown.
+      Where both rules apply the mode names the **network**, because a controller who drops
+      their own preference tomorrow must not thereby turn a legally-required decision into an
+      automatic one.
+      **Finding 57 was found by asking the question from the other side.**
+      `fdt-p:requiresManualApproval` says it inserts the pending-approval state; the evaluator
+      consulted it only on the branch where an eligibility fact could not be evidenced. So a
+      controller who asked for a person got one exactly when the station was stuck, and was
+      silently ignored whenever the machine was able to decide — the case they were most likely
+      asking about. It survived because no fixture both required approval and matched cleanly:
+      the defect lived in the gap between two fixtures.
+      **Q14-C's commercial request exists at last** — named by WP-1.3's acceptance criterion
+      since the plan was written, absent until now. It fails two ways on purpose, a purpose
+      constraint and a prohibition, because those are different in kind and a refusal has to
+      name the right one. **Q19** records the reading taken for a network that states no regime:
+      silence bars automated decisions, because the two errors are not symmetric.
+      13 mutations, 0 survivors, against a green control. `make e2e` 15 passed.
 - [ ] **WP-5.5 — Consoles for the testbed** · 2.7, 5.2, 5.3 · L
       Each component's UI has its own job; they are not one observability layer.
       **Depot:** publish and withdraw trains — upload a payload, declare parameters, the input
