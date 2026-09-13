@@ -658,3 +658,33 @@ shorter `sh:in` list in `:TrainShape` — the leaves only. The fixtures already 
 nothing in the corpus changes.
 
 **Blocks nothing.**
+
+---
+
+### Q22 — Who writes the 49 missing FDT-O labels? — **WORKED AROUND 13 Sep 2026**
+
+**The question.** 49 terms in `FDT-O/ontology/fdt-o.ttl` have no `rdfs:label`, among them the
+ones a person sees most often: the fourteen `fdt-inst:` interaction mechanisms (`SPARQL`, `SQL`,
+`Docker`, `FHIRAPI`, …), `fdt-o:DataStation`, `fdt-o:Train`, `fdt-o:supportsInteractionMechanism`,
+and `fdt-net:StationRole` and `fdt-net:HandlerRole` in `fdt-commons/vocab/fdt-network.ttl`.
+`fdt-inst:VocabularyAlignment`, added with ADR-024, has a label *and* a `skos:definition`, so this
+is a gap in the older half rather than a convention the ontology never adopted. Finding 64.
+
+**Why it needs deciding rather than doing.** FDT-O is the canonical `FAIRDataTeam/FDT-O`, and
+this checkout sits on the branch of a pending upstream PR (Q5). Adding 49 labels is an editorial
+pass on somebody else's published artefact. Most are uncontroversial transcription —
+`fdt-inst:SPARQL` is "SPARQL" — but not all: `fdt-o:hasControllingRights`, `fdt-o:isPayloadOf`
+and `fdt-o:generatesOutput` each need a definition written by whoever owns the meaning, and a
+label guessed from an IRI is exactly the kind of thing that then gets cited as if it were
+normative.
+
+**What the code does now.** Nothing in FDT-O changes. The consoles' `src/rdf/terms.ts` falls back
+to the IRI's last segment, spelled out and **never re-cased** (`StationRole` → `Station Role`,
+`SPARQL` → `SPARQL`), and marks the term `known: false` so a screen can show the difference
+between a term the vocabulary defines and one the console is merely spelling. The label table
+itself is generated from the vocabularies by `FDTConsole/tools/vocabulary.mjs`, so the moment a
+label is added upstream the consoles pick it up with no code change.
+
+**Blocks nothing.** It is a legibility defect, not a correctness one — but it is visible on the
+one screen an unauthenticated visitor sees (S9), which makes it worth a decision rather than a
+shrug.

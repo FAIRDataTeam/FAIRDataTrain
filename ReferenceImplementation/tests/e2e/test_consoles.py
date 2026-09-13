@@ -403,3 +403,198 @@ def test_the_operator_surface_is_not_open_to_the_consumer(
         assert station.get(path).status_code == 401, path
         assert station.get(path, headers=guessed).status_code == 401, path
         assert station.get(path, headers=OPERATOR).status_code == 200, path
+
+
+# =============================================================================================
+# The screens WP-5.5 finished with: the catalogue pages (S1, S6, S9), the audit slice (S7),
+# and the train catalogue (H1, H2). Each is checked for the thing its screen cannot do without.
+# =============================================================================================
+
+
+def _catalogue(station: TestClient) -> Any:
+    """The station's catalogue as the consoles parse it — Turtle, into an rdflib graph.
+
+    The consoles parse this with N3 in the browser; here it is rdflib, which is the point: the
+    document has to be readable by an ordinary RDF consumer, not only by the station's own
+    tests. Three screens are built on it and none of them has a JSON projection to fall back to.
+    """
+    import rdflib
+
+    response = station.get("/catalogue", headers={"Accept": "text/turtle"})
+    assert response.status_code == 200, response.text
+    graph = rdflib.Graph()
+    graph.parse(data=response.text, format="turtle")
+    return graph
+
+
+def test_the_catalogue_carries_the_terms_and_not_only_a_link_to_them(
+    watched: tuple[TestClient, TestClient, RunReport],
+) -> None:
+    """S9 and S6 render the controller's condition as a sentence. They can only do that if the
+    offer's rules are *in* the catalogue — an `odrl:hasPolicy` pointing at an IRI that resolves
+    nowhere leaves a public page with a dataset and no terms, which is the half a consumer has
+    to read."""
+    import rdflib
+
+    station, _, _ = watched
+    graph = _catalogue(station)
+    odrl = rdflib.Namespace("http://www.w3.org/ns/odrl/2/")
+    dataset = rdflib.URIRef("https://example.org/fdt/dataset/ut-gene-disease")
+
+    offers = list(graph.subjects(odrl.target, dataset))
+    assert offers, "the catalogue names no offer over the dataset it publishes"
+    [offer] = [o for o in offers if (o, rdflib.RDF.type, odrl.Offer) in graph]
+    # every rule the console draws a line for
+    assert list(graph.objects(offer, odrl.permission)), "no permission travelled with the offer"
+    assert list(graph.objects(offer, odrl.prohibition)), "no prohibition travelled with it"
+    assert list(graph.objects(offer, odrl.obligation)), "no duty travelled with it"
+    # and the duty's threshold, which is what "requires aggregates above k = 5" is made of
+    thresholds = {
+        str(value)
+        for duty in graph.objects(offer, odrl.obligation)
+        for constraint in graph.objects(duty, odrl.constraint)
+        for value in graph.objects(constraint, odrl.rightOperand)
+    }
+    assert thresholds == {"5"}
+
+
+def test_the_catalogue_names_its_network_so_a_console_need_not_invent_one(
+    watched: tuple[TestClient, TestClient, RunReport],
+) -> None:
+    """The consoles show a condition as in force "in <network>". The network's title is in the
+    station's self-description, which travels with the catalogue — so a reader of the catalogue
+    alone has a name to show. Without it every screen falls back to the IRI's last segment, and
+    the fallback is what `src/rdf/__tests__/policy.test.ts` pins when reading the bare fixture."""
+    import rdflib
+
+    station, _, _ = watched
+    graph = _catalogue(station)
+    network = rdflib.URIRef("https://example.org/fdt/net/health-research-nl")
+    titles = [str(title) for title in graph.objects(network, rdflib.URIRef(
+        "http://purl.org/dc/terms/title"))]
+    assert titles == ["National health research network"]
+
+
+def test_the_public_page_can_be_drawn_without_a_credential(
+    watched: tuple[TestClient, TestClient, RunReport],
+) -> None:
+    """S9 is served to anyone. Everything it shows comes from two unauthenticated documents, and
+    if either needed the operator credential the page would not exist."""
+    station, _, _ = watched
+    for path in ("/", "/catalogue", "/shapes"):
+        response = station.get(path, headers={"Accept": "text/turtle"})
+        assert response.status_code == 200, (path, response.status_code)
+        assert response.text.strip(), path
+
+
+def test_the_audit_slice_answers_a_question_the_visit_list_cannot(
+    watched: tuple[TestClient, TestClient, RunReport],
+) -> None:
+    """S7, and finding 65.
+
+    The question is "everything that happened to this dataset". Composed from the visit list it
+    is answerable only for the visits on the page; asked of the station it is answerable for all
+    of them, and the station says how many matched apart from how many it returned.
+    """
+    station, _, _ = watched
+    everything = got(station, "/admin/events", headers=OPERATOR)
+    on_the_dataset = got(
+        station,
+        "/admin/events?dataset=https://example.org/fdt/dataset/ut-gene-disease",
+        headers=OPERATOR,
+    )
+    assert everything["total"] > 0
+    assert on_the_dataset["matched"] == everything["matched"] > 0
+    # every event carries the context that made the filter answerable at all
+    for event in on_the_dataset["events"]:
+        assert event["target"] == "https://example.org/fdt/dataset/ut-gene-disease"
+        assert event["consumer"], "an audit row with no actor answers no audit question"
+    # and the justification chain the screen draws is on the events, not assembled by it
+    assert any(event.get("justification", {}).get("rule") for event in everything["events"])
+
+
+def test_the_audit_slice_keeps_refused_and_rejected_apart(
+    watched: tuple[TestClient, TestClient, RunReport],
+) -> None:
+    """ADR-026 through the filter. An auditor asking for a controller's refusals must not be
+    handed results that failed inspection: a different party decided a different thing."""
+    station, _, _ = watched
+    refused = got(station, "/admin/events?state=Refused", headers=OPERATOR)
+    rejected = got(station, "/admin/events?state=Rejected", headers=OPERATOR)
+    delivered = got(station, "/admin/events?state=Delivered", headers=OPERATOR)
+    assert delivered["matched"] > 0
+    assert refused["matched"] == 0 and rejected["matched"] == 0
+    # the station is not empty — the filter selected nothing, which is a different fact
+    assert refused["total"] == delivered["total"] > 0
+
+
+def test_the_handler_console_resolves_a_train_from_its_depot_and_not_the_index(
+    watched: tuple[TestClient, TestClient, RunReport],
+) -> None:
+    """H1 and H2, and ADR-029.
+
+    The registry says a train exists and where it was harvested from; the Depot says what it is.
+    The screen resolves `source` + `id` and reads the description there. This checks that the
+    registry publishes enough to make that possible, and that what comes back carries the parts
+    H2 renders — the declared parameters and the input requirement that selects a station.
+    """
+    import rdflib
+
+    from fdt_depot.api import build_app as build_depot
+    from fdt_depot.core.config import DepotSettings
+    from fdt_depot.core.contracts import Contracts as DepotContracts
+    from fdt_registry.api import build_app as build_registry
+    from fdt_registry.core.config import RegistrySettings, Source, SourceKind
+    from fdt_registry.core.contracts import Contracts as RegistryContracts
+    from fdt_registry.harvest.harvester import Harvester
+
+    depot_url = "http://depot.test"
+    depot = TestClient(
+        build_depot(
+            DepotSettings(
+                iri="https://depot.example.org/fdt/v1",
+                contracts_dir=COMMONS,
+                ontology_dir=ONTOLOGY,
+            ),
+            DepotContracts(COMMONS, ONTOLOGY),
+        ),
+        base_url=depot_url,
+    )
+    settings = RegistrySettings(
+        iri="https://registry.example/fdt/v1",
+        sources=(Source(url=depot_url, kind=SourceKind.DEPOT),),
+        contracts_dir=COMMONS,
+        ontology_dir=ONTOLOGY,
+    )
+    contracts = RegistryContracts(COMMONS, ONTOLOGY)
+    harvester = Harvester(settings, contracts, clients={depot_url: depot})
+
+    with depot, TestClient(build_registry(settings, contracts, harvester=harvester)) as reg:
+        assert all(row["reached"] for row in reg.post("/harvest").json())
+        indexed = reg.get("/trains").json()
+        entry = next(
+            train for train in indexed
+            if train["iri"] == "https://example.org/fdt/train/gene-disease"
+        )
+        # the two fields the console follows back to the authority
+        assert entry["source"] == depot_url
+        assert entry["id"]
+        described = depot.get(f"/trains/{entry['id']}", headers={"Accept": "text/turtle"})
+
+    assert described.status_code == 200, described.text
+    graph = rdflib.Graph()
+    graph.parse(data=described.text, format="turtle")
+    train = rdflib.URIRef("https://example.org/fdt/train/gene-disease")
+    run = rdflib.Namespace("https://w3id.org/fdt/run#")
+    fdt_o = rdflib.Namespace("https://w3id.org/fdt/fdt-o#")
+
+    # H2 renders exactly these, and a plan that set anything else would set what the train
+    # does not read
+    names = {str(graph.value(parameter, run.name))
+             for parameter in graph.objects(train, run.parameter)}
+    assert names == {"mode", "terms", "min_evidence", "limit"}
+    # ADR-030: this, and not the theme, is what selects a station
+    assert graph.value(train, fdt_o.hasRequirement) is not None
+    # and the digest the screen shows, which a station checks at PEP 1
+    payload = graph.value(train, fdt_o.hasPayload)
+    assert str(graph.value(payload, fdt_o.artifactDigest)).startswith("sha256:")

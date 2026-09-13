@@ -103,7 +103,8 @@ test:  ## run each component's tests, lint and types, in its own environment
 	@cd $(CONSOLE) \
 	  && { [ -d node_modules ] || npm install --silent --no-fund --no-audit; } \
 	  && npm run --silent generate \
-	  && npm run --silent typecheck
+	  && npm run --silent typecheck \
+	  && npm run --silent test
 
 # The scenarios need every component in ONE environment: they run the real Handler against
 # the real station, which is the only way either can be shown to agree with the other.

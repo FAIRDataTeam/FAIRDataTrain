@@ -8,13 +8,13 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** **finishing WP-5.5 — the consoles**, which is what M5 exists to produce: the ecosystem as something you can watch rather than only something the tests assert. Six screens of it exist (station S2, S3, S8; Handler H3; the Depot and registry read consoles); **M5 does not close until the rest do and the acceptance run is done in a browser.** Work on M2 began in parallel because WP-2.4's controller API was the prerequisite for console S3. WP-5.0 through WP-5.4 are done — FDT-O is at 4.0.0, a train declares the data it needs, a Depot is the authority for it, a registry answers which stations hold it and names the property the others were missing, and two stations in two networks now show the difference between a decision a machine may take and one it may not. The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always.
+**Next:** **WP-5.5's last surface — the Depot's publish and withdraw — and then M5's browser acceptance.** Eleven screens now exist: station S1, S2, S3, S6, S7, S8 and the public page S9; Handler H1, H2, H3 and H4; plus the Depot and registry read consoles. What is left all writes or reads a controller's own policy *as that controller* — the Depot's writes, station S4 and S5, and H2's dispatch step — and the console has no controller identity to do it as: **Q21 now blocks four things**, and is the one decision standing between here and M5 closing. WP-5.0 through WP-5.4 are done — FDT-O is at 4.0.0, a train declares the data it needs, a Depot is the authority for it, a registry answers which stations hold it and names the property the others were missing, and two stations in two networks now show the difference between a decision a machine may take and one it may not. The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always.
 
 | | | |
 |---|---|---|
 | **M0** Foundations | ✅ done | 12 Sep 2026 |
 | **M1** One visit | ✅ done | 12 Sep 2026 |
-| **M5** Testbed (new — ADR-029) | 🟨 in progress — WP-5.0–5.4 done; **WP-5.5 part built** | |
+| **M5** Testbed (new — ADR-029) | 🟨 in progress — WP-5.0–5.4 done; WP-5.5 at 11 of 13 screens, blocked on Q21 | |
 | **M2** Fan-out and governance | 🟨 in progress — WP-2.4's controller API done | |
 | **M3** Multi-hop | ⬜ not started | |
 | **M4** Hardening and alignment | ⬜ not started | |
@@ -311,18 +311,37 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       manual, ADR-034), which shows the *effective* mode per network rather than the operator's
       selection, marks a network whose regime was assumed rather than published, and records
       every change with a reason into an append-only history.
-      *(Done: station **S2 Jobs** (the checkpoint chain with every justification) and
-      **S8 Station settings** (the decision mode); Handler **H3 run monitor** (itinerary map,
-      checkpoint dots, event feed, completeness statement); and read consoles for the **Depot**
-      (holdings, computed digests, and what it withholds first on the page) and the **registry**
-      (harvest freshness, and where a train can run with the reason each other station could
-      not). Two contract surfaces had to be built first, because neither existed: the station's
-      operator API and — the Handler had no HTTP server at all — `handler-api.yaml`.
-      Building them found findings 60 and 61.
-      Still to build: S1, S6, S7, the rest of S8, S9; H1, H2, H4; the Depot's publish/withdraw
-      surface, and the Handler client (connect to a registry, select and parametrise a train,
-      choose an itinerary strategy). **S3 Approvals was since built, in WP-2.4** — it needed
-      the controller API, not the identity model. The Depot's writes still wait on Q21.)*
+      *(**Built:** station **S1 Dashboard**, **S2 Jobs**, **S3 Approvals** (in WP-2.4),
+      **S6 Datasets**, **S7 Audit explorer**, **S8 Settings** and **S9 public catalogue** — S9
+      as its own bundle, because an anonymous visitor should not be served the operator's
+      console with one route rendered differently; Handler **H1 Trains**, **H2 New plan**,
+      **H3 Run monitor** and **H4 Replay**; and read consoles for the **Depot** and the
+      **registry**. Three contract surfaces had to be built first, because none existed: the
+      station's operator API, `handler-api.yaml` (the Handler had no HTTP server at all), and
+      `controller-api.yaml`. Building them found findings 60, 61, 62, 63, 65 and 66.
+
+      Three screens read what a station **publishes as RDF** — `GET /`, `/catalogue`, `/shapes`
+      — because there is no JSON projection of them and there should not be: a second
+      representation is a second thing to keep true, and the one the console read would be the
+      one nobody else did. `src/rdf/` parses the published Turtle and renders an `odrl:Offer` as
+      the design system's controlled sentence, with every label generated from the vocabularies
+      (`tools/vocabulary.mjs`) so a console cannot call `fdt-p:carryOnward` "deliver result".
+      That found **finding 64 / Q22**: 49 FDT-O terms carry no `rdfs:label`, among them every
+      interaction mechanism a station publishes.
+
+      **Still to build: the Depot's publish/withdraw surface**, station **S4** (the condition
+      builder) and **S5** (agreement detail). All three write or read a controller's own policy
+      *as that controller*, and the console has no controller identity to do it as — **Q21**.
+      H2 stops on the same line for the same reason: it composes a `fdt-run:Plan` and hands it
+      over, because starting a run means dispatching a train on somebody's behalf and nothing
+      yet says who may do that for whom. The Handler's own CLI already declines to grow a "run
+      this" endpoint on that reasoning, and adding one from a console would be taking the
+      decision in a worse place.
+
+      **The acceptance run has not been done in a browser**, and its second half — a train
+      published to the Depot and found through the registry — needs those Depot writes. Its
+      first half is covered from both ends by `tests/e2e/test_consoles.py` (15 tests), which
+      caught a bug shipped in the registry console the session before: finding 66.)*
       **Handler client:** connect to `FDTRegistry` instances, select and parametrise trains,
       choose an itinerary strategy, watch the run.
       The **Individual Gateway is not in M5** — it lands in M2 with the controller workflow it
