@@ -310,8 +310,13 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       self-description — including the **decision-mode selector** (automated / semi-automated /
       manual, ADR-034), which shows the *effective* mode per network rather than the operator's
       selection, marks a network whose regime was assumed rather than published, and records
-      every change with a reason into an append-only history. *(The configuration screen is
-      done; the other three station screens are not.)*
+      every change with a reason into an append-only history.
+      *(Done: **S2 Jobs** with the horizontal checkpoint chain and its justifications, and
+      **S8 Station settings** with the decision mode. Building S2 found finding 60 — the station
+      had been announcing "Offer matched" on every adverse pending approval. Still to build:
+      S1 dashboard, S6 datasets, S7 audit, the rest of S8, and S9 the public catalogue page;
+      S3 approvals waits for WP-2.4's controller API. The Depot, Registry and Handler consoles
+      are not started.)*
       **Handler client:** connect to `FDTRegistry` instances, select and parametrise trains,
       choose an itinerary strategy, watch the run.
       The **Individual Gateway is not in M5** — it lands in M2 with the controller workflow it
