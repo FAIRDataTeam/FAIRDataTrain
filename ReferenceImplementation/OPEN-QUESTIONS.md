@@ -757,3 +757,38 @@ controller and audit surfaces stay closed. That would be two settings rather tha
 a policy question about what "published" means for a catalogue: a station that publishes a
 catalogue for machines to harvest and refuses to let a web page read it is drawing a line the
 FAIR principles do not obviously draw. Left as one setting until somebody says otherwise.
+
+### Q24 — What does a registry do with a withdrawn train? — **DEFAULT TAKEN 13 Sep 2026**
+**Blocks:** nothing today. It becomes real the moment WP-5.3's registry harvests a Depot that has
+withdrawn something, which is now possible (ADR-036, contracts v0.28.0).
+
+A withdrawn train stays addressable at its Depot by design: the IRI, the bytes and the digest
+still resolve, marked with who withdrew it, when and why, so that a finished run stays explicable
+and a past envelope can still be checked against the bytes that produced it. What the *registry*
+should do with it is a different question and this ADR does not answer it.
+
+Three readings, and they differ in who is inconvenienced:
+
+1. **Index it, mark it.** A search result names the train and says it is withdrawn, with the
+   reason. A consumer who had already built a plan around it learns why it is gone, from the
+   index, without having to resolve the Depot.
+2. **Index it, exclude it from search.** It is resolvable by IRI and never *offered*. Nobody
+   builds a new plan around a withdrawn train by accident; somebody chasing one they already used
+   can still find it.
+3. **Drop it at the next harvest.** The index carries what is available. A consumer whose plan
+   names it gets "not in this index", which is the answer the registry already gives for a train
+   it has never seen — and those are different facts (the same distinction as finding 67, one
+   level up).
+
+**Default taken: (2).** A registry is an index and not a trust anchor (ADR-029), and *offering* a
+withdrawn train to somebody composing a plan is the registry making a recommendation it has no
+standing to make. Resolvability is kept because dropping it recreates finding 67's confusion
+between "gone" and "never here". `tools/coverage.py` is deliberately unaffected: whether a
+station holds the data a train needs is a fact about the station, and does not change because the
+train was withdrawn.
+
+**What it does not answer**, and what a decision should: whether a registry that has indexed a
+withdrawn train should tell anybody — the Handler that resolved it last week, the stations that
+ran it. ADR-036 decided the *Depot* notifies nobody, and gave the reason: a notification list is a
+record of who is doing what with whose train, held by a party with no business knowing. The same
+argument applies to a registry, which is why the default is silence there too.
