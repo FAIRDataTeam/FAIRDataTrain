@@ -697,9 +697,9 @@ nothing in the corpus changes.
 
 ---
 
-### Q22 — Who writes the 49 missing FDT-O labels? — **WORKED AROUND 13 Sep 2026**
+### Q22 — Who writes the missing FDT-O labels? — **WORKED AROUND 13 Sep 2026; 49 → 48**
 
-**The question.** 49 terms in `FDT-O/ontology/fdt-o.ttl` have no `rdfs:label`, among them the
+**The question.** 49 terms in `FDT-O/ontology/fdt-o.ttl` had no `rdfs:label` when this was written; 48 do now. `fdt-o:TrainProvider` was the first to be **decided** rather than transcribed — ADR-036 gave it the label "Train Creator", a definition of what a creator is answerable for, and the `hasControllingRights` restriction its three sibling parties already had. It is exactly the case this question is about: the label could not be guessed from the IRI, because the IRI says the wrong word. Among the rest are the
 ones a person sees most often: the fourteen `fdt-inst:` interaction mechanisms (`SPARQL`, `SQL`,
 `Docker`, `FHIRAPI`, …), `fdt-o:DataStation`, `fdt-o:Train`, `fdt-o:supportsInteractionMechanism`,
 and `fdt-net:StationRole` and `fdt-net:HandlerRole` in `fdt-commons/vocab/fdt-network.ttl`.

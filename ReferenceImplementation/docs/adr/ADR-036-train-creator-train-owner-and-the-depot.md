@@ -34,14 +34,24 @@ negotiated for themselves.
 
 | | who | what they are answerable for |
 |---|---|---|
-| **Train Creator** | the agent — person or organisation — who created the train | the code, the declared parameters, the declared output, and the licence under which anyone may take it |
+| **Train Creator** (`fdt-o:TrainProvider`) | the agent — person or organisation — who created the train | the code, the declared parameters, the declared output, and the licence under which anyone may take it |
 | **Train Owner** | the agent who takes a train and sends it to stations | this visit: the train is visiting *on behalf of* the owner, and it is the owner a controller is deciding about |
 | **Depot administrator** | the agent who operates the Depot | that the Depot serves what was published, and that it can stop serving something it must stop serving |
 
-`fdt-o:TrainCreator` is added to FDT-O as a class, defined the way `fdt-o:StationOwner` and
-`fdt-o:TrainOwner` already are — an `foaf:Agent` with `fdt-o:hasControllingRights` over the
-train. Symmetry is the argument: it is the only one of the four parties in this ecosystem
-without a class, and a role with nowhere to carry a definition is a role that gets re-guessed.
+**The class already existed.** `fdt-o:TrainProvider` — "the agent(s) (organization or person)
+who created the Train" — has been in FDT-O since the legacy OWL, and this ADR was first drafted
+saying no such term existed. It has no `rdfs:label` (one of the 49 in finding 64), which is why
+it could not be found by anybody looking for a creator, and it is used by nothing: no shape, no
+example, no code. A distinction that lives only in a class definition is one nothing can be
+wrong about, which is how it survived five milestones unexercised (finding 69).
+
+So nothing is added and nothing is renamed. `fdt-o:TrainProvider` gains the label **"Train
+Creator"**, a `skos:definition` of what a creator is answerable for, and the
+`fdt-o:hasControllingRights` restriction its three sibling parties already had — it was the only
+one of the four defined as a bare `foaf:Agent` subclass. The IRI keeps the word *Provider*: a
+published IRI is a promise, the term is decades-adjacent to the legacy ontology, and "who made
+this" is what it always meant. The cost is real and permanent — the word on screen differs from
+the word in the IRI — and it was taken deliberately over renaming a published term.
 
 The backwards `dct:creator` restriction is turned the right way round in the same change
 (finding 68). Both go on the Q5 branch, which is where FDT-O is currently edited.
@@ -100,10 +110,17 @@ Withdrawal is a state on the train, not a notification to anybody (§Alternative
 
 ## Alternatives considered
 
-**`dct:creator` on the train and no new class.** Nothing new to define and harvesters already
-understand it. Rejected: the property is how a train points at its creator, and it will still be
-used for that; what it cannot do is carry the definition of the role or be the domain of
-anything. `fdt-o:TrainOwner` did not settle for `dct:contributor` either.
+**`dct:creator` on the train and no class at all.** Rejected: the property is how a train points
+at its creator, and it is used for exactly that in `fdts:TrainOfferShape`; what it cannot do is
+carry the definition of the role or be the domain of anything. `fdt-o:TrainOwner` did not settle
+for `dct:contributor` either.
+
+**Renaming `fdt-o:TrainProvider` to `fdt-o:TrainCreator`.** This was the answer first given, on
+my statement that no such term existed — a statement that was wrong. With the term in hand the
+question became a rename of a published IRI rather than a new class, and it was decided against:
+nothing in this ecosystem uses it, but the legacy OWL is published and a deprecation that nobody
+needs is a cost paid by everyone downstream. "Provider" is the wrong word and the label is where
+that gets fixed.
 
 **The owner publishes to the Depot.** Fewer parties to model. Rejected: a creator would then
 have no standing at the Depot over their own artefact, and one train taken by twelve
@@ -141,9 +158,11 @@ marked record). Three operations, each of which has to appear in `train-depot-ap
 `fdt-commons` **before** any of it is written, with shapes for the creator's offer and the
 creator–owner agreement and fixtures that fail for the right reasons.
 
-**FDT-O changes**, on the Q5 branch: `fdt-o:TrainCreator`, and the `dct:creator` restriction
-moved to `fdt-o:Train` where it belongs. Both need `rdfs:label` and `skos:definition` — which
-makes them the first two terms decided rather than inherited in Q22's list of 49.
+**FDT-O changes**, on the Q5 branch: `fdt-o:TrainProvider` gains a label, a definition and the
+restriction it was missing, and the `dct:creator` restriction moves to `fdt-o:Train` where it
+belongs. The first is the first of Q22's 49 unlabelled terms to be **decided** rather than
+transcribed, and it is the case that question is about: the label could not be guessed from the
+IRI, because the IRI says the wrong word. 49 → 48.
 
 **A second ODRL evaluation appears in the ecosystem**, in a component that had none. The Depot
 now needs the pySHACL and ODRL machinery the station has, and the two must not fork: whatever a
