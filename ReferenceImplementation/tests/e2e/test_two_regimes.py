@@ -32,7 +32,13 @@ from fastapi.testclient import TestClient
 from pydantic import AnyHttpUrl
 
 from fdt_station.app import create_app
-from fdt_station.core.config import Adapter, HostedDataset, NetworkMembership, StationSettings
+from fdt_station.core.config import (
+    Adapter,
+    DecisionMode,
+    HostedDataset,
+    NetworkMembership,
+    StationSettings,
+)
 
 from conftest import COMMONS, STATION_IRI, STATION_URL
 
@@ -82,6 +88,11 @@ def oosterlicht() -> Iterator[TestClient]:
     not thereby offered in another.
     """
     settings = StationSettings(
+        # ADR-034: these scenarios are about what the negotiation rule decides, so
+        # the operator's own dial is stated. A production station defaults to
+        # `manual`, and a scenario that relied on the default would be exercising
+        # the default rather than the rule it was written for.
+        decision_mode=DecisionMode.AUTOMATED,
         iri=AnyHttpUrl(OOSTERLICHT_IRI),
         title="Oosterlicht MC station (clinical genetics, fictional)",
         owner_name="Oosterlicht MC — clinical genetics IT",

@@ -20,7 +20,12 @@ from fdt_handler.protocol.client import StationClient
 from fdt_handler.run.catalogue import FixtureCatalogue
 from fdt_handler.runner import Runner
 from fdt_station.app import create_app
-from fdt_station.core.config import Adapter, HostedDataset, StationSettings
+from fdt_station.core.config import (
+    Adapter,
+    DecisionMode,
+    HostedDataset,
+    StationSettings,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 COMMONS = ROOT / "fdt-commons"
@@ -35,6 +40,11 @@ STATION_URL = "http://station.ut.test"
 @pytest.fixture(scope="module")
 def station_settings() -> StationSettings:
     return StationSettings(
+        # ADR-034: these scenarios are about what the negotiation rule decides, so
+        # the operator's own dial is stated. A production station defaults to
+        # `manual`, and a scenario that relied on the default would be exercising
+        # the default rather than the rule it was written for.
+        decision_mode=DecisionMode.AUTOMATED,
         iri=AnyHttpUrl(STATION_IRI),
         title="University station (fictional)",
         owner_name="University — ICT services",

@@ -42,7 +42,12 @@ from fdt_registry.core.config import RegistrySettings, Source, SourceKind
 from fdt_registry.core.contracts import Contracts as RegistryContracts
 from fdt_registry.harvest.harvester import Harvester
 from fdt_station.app import create_app
-from fdt_station.core.config import Adapter, HostedDataset, StationSettings
+from fdt_station.core.config import (
+    Adapter,
+    DecisionMode,
+    HostedDataset,
+    StationSettings,
+)
 
 from conftest import COMMONS, STATION_IRI, STATION_URL, plan_with_min_evidence
 
@@ -65,6 +70,11 @@ def _near_miss_settings() -> StationSettings:
     `gd:subjectCount` is what the train's k-anonymity duty is a rule about.
     """
     return StationSettings(
+        # ADR-034: these scenarios are about what the negotiation rule decides, so
+        # the operator's own dial is stated. A production station defaults to
+        # `manual`, and a scenario that relied on the default would be exercising
+        # the default rather than the rule it was written for.
+        decision_mode=DecisionMode.AUTOMATED,
         iri=AnyHttpUrl(NEAR_MISS_IRI),
         title="Westerlicht University data station (fictional)",
         owner_name="Westerlicht University — research data services",
@@ -80,7 +90,7 @@ def _near_miss_settings() -> StationSettings:
             "governance_authority": "https://example.org/fdt/auth/hri-like",
             "governance_authority_name": "Governance authority",
             "admits_natural_persons": False,
-                "permits_automated_decision": True,
+            "permits_automated_decision": True,
             "trusted_issuer": "https://idp.example.org/ls-aai-like",
             "role": "https://w3id.org/fdt/network#StationRole",
             "credential": "https://example.org/fdt/cred/westerlicht-hri",

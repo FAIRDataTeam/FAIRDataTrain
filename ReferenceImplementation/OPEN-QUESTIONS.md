@@ -270,6 +270,49 @@ includes a station rewriting its own history, that needs an append-only log or
 counter-signature by the train owner, and that is an ADR, not a shape. `AgreementShape` can
 express the digests today; it cannot express custody.
 
+### Q20 — What exactly does `semi-automated` mean? — **DEFAULT TAKEN 13 Sep 2026**
+**Blocks:** nothing. Taken so the admin selector could ship with three positions rather than two.
+
+You asked for a selector offering **automated / semi-automated / manual**. The outer two were
+already defined by ADR-032; the middle one was not defined anywhere, and ADR-032 constrains what
+it is allowed to mean.
+
+**Default taken:** under `semi-automated` the station concludes a **grant** by itself where every
+condition of the offer is satisfied, and sends every **adverse** outcome — a refusal, an
+eligibility fact it cannot establish, a prohibition that fired — to a person, with its
+recommendation and the evidence behind it.
+
+Why that reading and not the obvious other one. "The machine handles the clear-cut cases and
+defers the judgement calls" is what the phrase sounds like, and ADR-032 has already rejected it
+in the network's own regime: the station would be classifying its own grounds as clear-cut, and
+that classification is precisely what a disappointed consumer would dispute. The reading taken
+keeps the machine on the non-adverse side of every decision, which is the line ADR-032 draws.
+
+The cost is the one the mode is for: a consumer whose request does not match waits for a person
+rather than being told immediately. That is latency for the refused party, not a decision taken
+about them by a machine. Marked in `fdt_station/policy/evaluator.py` (`_authorisation`) and in
+`fdt-p:SemiAutomated`'s own definition.
+
+### Q21 — Who may change how a station is configured? — **PLACEHOLDER IN PLACE 13 Sep 2026**
+**Blocks:** nothing today; WP-2.4 is where it belongs.
+
+The station now has an admin API (`station-admin-api.yaml`) with one writable setting, and no
+identity model to say who may use it. The visit protocol's tokens answer a different question —
+they say who is visiting on behalf of which consumer in which network, not who operates this
+station.
+
+**Placeholder taken:** a bearer token configured out of band (`FDT_STATION_ADMIN_TOKEN`). In
+`production` run mode a station with no admin token configured **refuses every write** and says
+so in the response and in the console, rather than offering a control that returns 401 on every
+use. In `development` run mode writes are open and the console says that too — a testbed with a
+mandatory credential is a testbed nobody brings up.
+
+What it does not answer, and WP-2.4 should: whether the operator, the controller and the auditor
+are three roles or three people, whether a controller may see (or set) the decision mode of a
+station holding their data, and whether an operator may change the mode while approvals queued
+under the old one are still outstanding. The station's own answer to the last is that a queued
+approval keeps the rule it arrived under; the API says so, no shape enforces it.
+
 ### Q19 — What does a network that has not stated its regime mean? — **DEFAULT TAKEN 13 Sep 2026**
 **Blocks:** nothing. Taken so WP-5.4 could proceed; overturn it if you read it otherwise.
 

@@ -307,7 +307,11 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       **Station:** live visits with every checkpoint decision and justification; the controller's
       queue — approve, refuse, revoke — with the recommendation and evidence attached (ADR-032);
       the catalogue and its offers, including parts; configuration and the published
-      self-description.
+      self-description — including the **decision-mode selector** (automated / semi-automated /
+      manual, ADR-034), which shows the *effective* mode per network rather than the operator's
+      selection, marks a network whose regime was assumed rather than published, and records
+      every change with a reason into an append-only history. *(The configuration screen is
+      done; the other three station screens are not.)*
       **Handler client:** connect to `FDTRegistry` instances, select and parametrise trains,
       choose an itinerary strategy, watch the run.
       The **Individual Gateway is not in M5** — it lands in M2 with the controller workflow it

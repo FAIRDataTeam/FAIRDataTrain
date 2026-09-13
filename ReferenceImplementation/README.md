@@ -105,3 +105,5 @@ are in [`docs/reviews/`](docs/reviews/).
 ## Documentation
 
 The architecture is normative and is **edited** in the project folder `FAIR Data Train/fair-data-station-architecture/`; **copies live in this repository** under [`docs/architecture/`](docs/architecture/) (copied 12 Sep 2026): the ecosystem architecture (ADR-014–027), the station architecture (ADR-001–013), the itinerary patterns, the time-to-groin reference case, the data-space alignment register, the implementation plan, and the 22 console mock-ups that are the UI specification. Every decision record ADR-001–027 is also extracted into its own file in [`docs/adr/`](docs/adr/), next to ADR-028 onward.
+
+[`docs/deployment.md`](docs/deployment.md) is the operator's reference: the deployment profiles, the **run mode** a deployment is started as, the **decision mode** that says how much of a negotiation a station concludes by itself, and every `FDT_STATION_*` setting. Read it before bringing a station up over data that matters — the defaults are the cautious ones, and the reasons they are cautious are there.
