@@ -143,6 +143,50 @@ refused, and are kept as given. Choosing between them would be the silent resolu
 exists to prevent, taken by the party least entitled to take it, and refusing to start would turn
 one controller's metadata defect into an outage for every other controller at the station.
 
+## The signing keys, and what a station cannot do without one
+
+`FDT_STATION_SIGNING_KEY` — a JWK Set holding this station's Ed25519 key, with the private half.
+ADR-038: an agreement carries a signature from **each** party, and the station signs the
+assigner's side. Without a key it publishes its catalogue, says so loudly at startup, and
+**concludes no agreement at all** — every visit that reaches negotiation rests at
+`negotiation.requested` with the reason naming this setting.
+
+That refusal is deliberately not a *Refused*. Refused is a data controller's governance decision
+about access and is reported verbatim to a data consumer (ADR-026); a station operator's missing
+configuration recorded in the controller's name would put a decision in the record that the
+controller never took.
+
+The station signs as the **controller's agent**, and the agreement says so: `fdt-p:signedBy` names
+the station and `fdt-p:onBehalfOf` names the controller. *The controller signed* and *the station
+signed for the controller* are different facts with different weight, and a record that let them
+be confused would be worth less than no signature — a verifier would read the weaker as the
+stronger. A controller holding their own key is the end state and is not built; the agent's
+signature is the bridge, and it is marked as one.
+
+`GET /keys` publishes the public half. Only the public half: the document is built from the public
+key rather than by filtering the private one, so there is no code path that can serve `d`.
+
+`FDT_STATION_PARTY_KEYS` — party IRI → the **public** keys this station will accept an assignee's
+signature from, as `{"<party IRI>": {"keys": [<JWK>, …]}}`. The same shape the Depot uses for
+creators, and for the same reason: **where the key comes from is the whole of the security here.**
+A station that fetched the key from wherever the signature pointed would establish only that the
+signer holds the key they nominated — anyone can name any party and publish a key set at a URL
+they control. The binding is configuration, out of band.
+
+A station told about nobody accepts nothing and says `UnknownKey`, which is a key-distribution
+problem reported as one. The four refusals are kept apart on purpose: `UnknownKey` says nothing is
+wrong with the signature, `DoesNotVerify` says the signature is wrong, `WrongParty` is valid
+cryptography by somebody who is not the assignee, and `WrongDigest` means the two sides are not
+looking at the same document. One answer for all four would send a train owner hunting a forgery
+that never happened.
+
+**Nothing runs half-signed.** The station signs, emits `negotiation.awaiting-signature` with the
+digest, and waits; the Handler checks the terms and that signature, signs the assignee's side at
+`POST /visits/{id}/agreement/signature`, and only then is the agreement active and the run queued.
+The exchange is the Handler's step because a station cannot reach a Handler that chose
+`mode: poll`. On the Handler's side the key is `--signing-key`, with `--owner` naming the train
+owner it signs for.
+
 ## Bringing the testbed up
 
 ```sh
@@ -182,6 +226,8 @@ read and was not is exactly as broken as configuration that is wrong.
 | `FDT_STATION_ADMIN_TOKEN` | none | the operator's credential for the admin API |
 | `FDT_STATION_CONTROLLER_TOKENS` | none | JSON object, token → data controller IRI. None means no controller surface is served |
 | `FDT_STATION_CONDITIONS_DIR` | none | where a controller's access conditions are kept. None means the station publishes what it was deployed with and answers 501 to a change |
+| `FDT_STATION_SIGNING_KEY` | none | JWK Set with this station's Ed25519 signing key. **None means it concludes no agreements** (ADR-038) and says so at startup |
+| `FDT_STATION_PARTY_KEYS` | none | party IRI → the public keys an assignee's signature is accepted from. None means every such signature is an `UnknownKey` |
 | `FDT_STATION_IRI` | the profile's | the IRI the station is known by |
 | `FDT_STATION_BASE_URL` | the profile's | public base URL; the dispatch endpoint **is** this and nothing appended, so a path prefix goes here |
 | `FDT_STATION_ADAPTERS` | the profile's | JSON list; the enabled adapters are the *only* mechanisms the station advertises |

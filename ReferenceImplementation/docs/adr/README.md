@@ -51,7 +51,7 @@ decision interview of 13 September 2026, which closed every question blocking M2
 
 | ADR | Decision | Status |
 |---|---|---|
-| [**028**](ADR-028-counter-signed-agreements.md) | Agreements are counter-signed by the train owner | **Accepted**, 13 September 2026 |
+| [**028**](ADR-028-counter-signed-agreements.md) | Agreements are counter-signed by the train owner | **Accepted**, 13 September 2026 · **superseded in part by 038**: the counter-signature is now the assignee's `fdt-p:signature`, and the assigner signs too |
 | [**029**](ADR-029-train-depot-and-metadata-registry.md) | The Train Depot, and one metadata registry for stations and trains | **Accepted**, 12 September 2026 |
 | [**030**](ADR-030-train-data-requirements-and-station-selection.md) | A train declares the data it needs, and that is what selects a station | **Accepted**, 13 September 2026 |
 | [**031**](ADR-031-credentials-and-eligibility-evidence.md) | A credential proves what metadata only names | **Accepted**, 13 September 2026 |
@@ -61,7 +61,7 @@ decision interview of 13 September 2026, which closed every question blocking M2
 | [**035**](ADR-035-standing-at-a-station.md) | Standing: who may act at a station, and on whose behalf | **Accepted**, 13 September 2026 |
 | [**036**](ADR-036-train-creator-train-owner-and-the-depot.md) | A train's three parties, and what a Depot may be asked to do | **Accepted**, 13 September 2026 |
 | [**037**](ADR-037-a-depot-is-a-station-for-trains.md) | A Depot is a station for trains; a creator is asked through their Gateway | **Accepted**, 13 September 2026 |
-| [**038**](ADR-038-both-parties-sign-the-agreement.md) | Both parties sign the agreement, and it records who signed for whom | **Accepted**, 13 September 2026 |
+| [**038**](ADR-038-both-parties-sign-the-agreement.md) | Both parties sign the agreement, and it records who signed for whom | **Accepted**, 13 September 2026 · implemented (WP-2.9) |
 | [**039**](ADR-039-delegated-standing-and-the-auditor.md) | A controller may delegate to a named party; the auditor reads and writes nothing | **Accepted**, 13 September 2026 |
 | [**040**](ADR-040-a-depot-pings-its-registry.md) | A Depot pings its registry; the registry announces nothing | **Accepted**, 13 September 2026 |
 

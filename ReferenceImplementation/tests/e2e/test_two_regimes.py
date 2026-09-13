@@ -80,7 +80,7 @@ OOST = _membership(STROKE_OOST, automated=False,
 
 
 @pytest.fixture
-def oosterlicht() -> Iterator[TestClient]:
+def oosterlicht(signing_keys: dict[str, Path]) -> Iterator[TestClient]:
     """A station in both networks, holding data the gene–disease train can read.
 
     Two memberships and two offers over one dataset is not a contrivance: it is ADR-017's rule
@@ -88,6 +88,10 @@ def oosterlicht() -> Iterator[TestClient]:
     not thereby offered in another.
     """
     settings = StationSettings(
+        # ADR-038: this station concludes agreements, so it has a key to sign the assigner's
+        # side with, and has been told the owner's so it can check the assignee's.
+        signing_key=signing_keys["station"],
+        party_keys=signing_keys["parties"],
         # ADR-034: these scenarios are about what the negotiation rule decides, so
         # the operator's own dial is stated. A production station defaults to
         # `manual`, and a scenario that relied on the default would be exercising

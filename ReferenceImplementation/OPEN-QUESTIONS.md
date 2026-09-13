@@ -1006,3 +1006,55 @@ The decision keeps (2)'s evaluation and makes (2)'s warning a refusal, which is 
 should have been: a station that can see the contradiction and proceeds anyway has reported a
 fact and taken no responsibility for it. Marked `Q26` in
 `FAIRDataStation-py/src/fdt_station/policy/conditions.py`.
+
+---
+
+### Q27 — When the assignee will not sign, what outcome is the visit? — **DEFAULT TAKEN 13 Sep 2026**
+
+**The question.** ADR-038 makes an agreement carry a signature from **each** party. The station
+derives the terms, signs the assigner's side, and waits; the Handler checks and signs the
+assignee's. Nothing runs in between, because an agreement one party has signed is not an
+agreement. So there is a new way for a visit to end that nothing in ADR-026 has a word for: **the
+assignee never signs** — its Handler cannot be reached, it holds no key, or it reads the terms and
+declines them.
+
+**The default taken:** the station records **no outcome** — the visit rests at
+`negotiation.awaiting-signature` until it is withdrawn, exactly as a visit waiting for a person
+rests at `negotiation.pending-approval`. The *consumer's* side already has an answer: the Handler
+stops waiting at its follow deadline and its run reports `failed` with the reason, which is a
+statement about the Handler's patience and not about the station's verdict.
+
+So what is actually open is the **station's** word for it, and the honest position today is that
+it has none. That is a real gap and it is stated rather than papered over: two parties currently
+describe the same visit differently, and only one of them says anything at all.
+
+**Why not the others.** This is the part worth reading, because three of the seven outcomes look
+plausible and two of them would misreport somebody:
+
+- **Not `Refused`.** *Refused* is a **data controller's** governance decision about access, it is
+  reported verbatim to a data consumer in a completeness statement, and it is the one word ADR-026
+  exists to keep exact. A consumer walking away recorded as the controller refusing puts a
+  decision in the record that the controller never took — against the party least able to
+  contradict it later.
+- **Not `Rejected`.** *Rejected* is a checkpoint's verdict on a train (PEP 1) or a result (PEP 3).
+  No checkpoint has run.
+- **Not `TimedOut`.** That is the station's verdict on an **approval** that nobody answered, and
+  borrowing it would make "a person did not decide" and "a machine did not sign" the same fact in
+  every report that counts them.
+- **`Failed`** is the least wrong of the seven if one must be chosen: it is what a station says
+  when something did not complete for a technical reason, its failure policy is *Retry*, and a
+  signature that did not arrive is very often exactly a retry's problem. It is also the outcome a
+  consumer will attribute to the machinery rather than to a party, which is where the fault
+  usually is. It is **not** taken as the default, because a station cannot tell a Handler that is
+  slow from one that is never coming, and stamping a terminal outcome on a visit that may yet be
+  signed would close a record that is still open.
+
+**Why it is still a question.** *Failed* covers a Handler that could not be reached and a train
+owner who read the terms and declined them, and those are different facts: the second is a
+consumer's decision and deserves a word of its own, next to *Refused* and facing the other way. An
+eighth outcome is not a thing to add on a default — it changes `visit-event.schema.json`,
+`fdt-run`'s state list, every completeness statement and every failure policy. If you want one,
+that is an ADR.
+
+Marked `Q27` in `fdt-commons/protocol/visit-protocol.md` and
+`fdt-commons/protocol/agreement-derivation.md` §6.

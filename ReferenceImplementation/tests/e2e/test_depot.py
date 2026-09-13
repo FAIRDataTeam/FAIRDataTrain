@@ -33,12 +33,13 @@ from fdt_handler.contracts import Contracts as HandlerContracts
 from fdt_handler.protocol.client import StationClient
 from fdt_handler.run.catalogue import FixtureCatalogue
 from fdt_handler.run.depot import DepotCatalogue
+from fdt_handler.protocol.signing import OwnerKey
 from fdt_handler.runner import Runner
 from fdt_station.app import create_app
 from fdt_station.core.contracts import Contracts as StationContracts
 from fdt_station.core.depot import DepotClient
 
-from conftest import COMMONS, STATION_IRI, STATION_URL, plan_with_min_evidence
+from conftest import COMMONS, OWNER_PARTY, STATION_IRI, STATION_URL, plan_with_min_evidence
 
 ONTOLOGY = COMMONS.parent / "FDT-O"
 DEPOT_IRI = "https://example.org/fdt/depot/community"
@@ -61,7 +62,8 @@ def depot() -> Iterator[TestClient]:
 
 
 @pytest.fixture
-def runner(station_settings, depot: TestClient) -> Iterator[Runner]:  # noqa: F811
+def runner(station_settings, depot: TestClient,                        # noqa: F811
+           signing_keys: dict[str, Path]) -> Iterator[Runner]:
     """A Handler and a station that both resolve this train from the same Depot."""
     station_contracts = StationContracts(COMMONS, ONTOLOGY, depot=DepotClient(client=depot))
     app = create_app(station_settings, contracts=station_contracts)
@@ -77,6 +79,7 @@ def runner(station_settings, depot: TestClient) -> Iterator[Runner]:  # noqa: F8
             handler="https://handler.cardionet.example/fdt/v1",
             agent="m.devries@cardionet.example",
             client_for=lambda endpoint: StationClient(endpoint, client=http),
+            owner_key=OwnerKey.load(signing_keys["owner"], OWNER_PARTY),
             follow_deadline=30.0,
         )
 

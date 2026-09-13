@@ -47,6 +47,10 @@ def test_the_handler_drives_a_train_to_a_station_and_gets_an_aggregate(
         ("visit.received", "PEP1"),
         ("negotiation.requested", "NEG"),
         ("negotiation.matched", "NEG"),
+        # ADR-038, and the step that proves the two implementations agree: the station signed
+        # the assigner's side and waited, the Handler checked and signed the assignee's, and
+        # the station verified it. Nothing between these two events ran.
+        ("negotiation.awaiting-signature", "NEG"),
         ("negotiation.active", "NEG"),
         ("visit.queued", "PEP2"),
         ("visit.running", "EXEC"),

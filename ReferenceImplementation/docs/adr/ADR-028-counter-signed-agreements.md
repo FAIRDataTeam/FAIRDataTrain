@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Accepted**, 13 September 2026 — accepted by Luiz in the M5 decision interview. Proposed 12 September 2026, chosen as Q14-B; drafted because it adds a mechanism the architecture did not have. Adoption into `fdt-ecosystem-architecture.md` follows. |
+| **Status** | **Accepted**, 13 September 2026 — accepted by Luiz in the M5 decision interview. **Superseded in part by [ADR-038](ADR-038-both-parties-sign-the-agreement.md)** the same day: the mechanism here is unchanged and it is no longer the *whole* mechanism — the counter-signature became the assignee's `fdt-p:signature`, and the assigner signs too. Nothing below is wrong; §6's "an agreement without a counter-signature is valid and enforceable" is the one sentence that no longer holds. Proposed 12 September 2026, chosen as Q14-B; drafted because it adds a mechanism the architecture did not have. Adoption into `fdt-ecosystem-architecture.md` follows. |
 | **Deciders** | Luiz Olavo Bonino da Silva Santos |
 | **Relates to** | ADR-007/008 (negotiation), ADR-010 (identity), ADR-014 (one agreement per hop), ADR-027 (every decision is an event); `fdt-commons` findings 23–25, 28; `protocol/agreement-derivation.md` §6 |
 

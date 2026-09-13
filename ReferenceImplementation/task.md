@@ -14,7 +14,7 @@ is noted under the package and carries the id of the sweep item or question that
 |---|---|---|
 | **M0** Foundations | ✅ done | 12 Sep 2026 |
 | **M1** One visit | ✅ done | 12 Sep 2026 |
-| **M5** Testbed (new — ADR-029) | 🟨 in progress — **its acceptance criterion is met** (`make up && make acceptance`, 13 Sep 2026: 15/15 screens carrying live data in a real browser, no browser-level noise, and a train published to the Depot and found through the registry by its data requirement). WP-5.0–5.4, 5.2b and 5.5a done; WP-5.5 at 12 of 13 screens — **S5 and H2's dispatch step are what is left**, and S5 now waits on WP-2.9 | |
+| **M5** Testbed (new — ADR-029) | 🟨 in progress — **its acceptance criterion is met** (`make up && make acceptance`, 13 Sep 2026: 15/15 screens carrying live data in a real browser, no browser-level noise, and a train published to the Depot and found through the registry by its data requirement). WP-5.0–5.4, 5.2b and 5.5a done; WP-5.5 at 12 of 13 screens — **S5 and H2's dispatch step are what is left**; WP-2.9 is done, so S5 is unblocked and now has two signatures to render rather than one | |
 | **M2** Fan-out and governance | 🟨 in progress — WP-2.4's controller API done | |
 | **M3** Multi-hop | ⬜ not started | |
 | **M4** Hardening and alignment | ⬜ not started | |
@@ -606,19 +606,69 @@ surface, and doing any of them by editing code first is the thing this project d
       reason it was wrong is worth keeping: the default reasoned that a Depot has nobody to ask,
       when being elsewhere is the normal condition of the party who decides. Depends on the
       Gateway (WP-2.4), which is the piece that does not exist yet.
-- [ ] **WP-2.9 — Both parties sign the agreement (ADR-038)** · 1.3 · M
-      ADR-028 gave the agreement the assignee's signature and left the assigner's side unsigned —
-      the side where the custody problem lives, because the station writes the agreement, keeps
-      the record, and is the party the controller is trusting. `fdt-p:countersignature`
-      generalises to `fdt-p:signature` with a role and an on-behalf-of, `AgreementShape` requires
-      both sides, and `tools/derivation.py` checks them: a shape requiring "at least one
-      signature" passes every unilateral agreement. The station needs a signing key and a
-      published JWKS. **The distinction to protect** is that *the controller signed* and *the
-      station signed for the controller* are different facts — a controller holding their own key
-      is the end state, an agent's signature is the bridge, and an agreement that let them be
-      confused would be worth less than no signature at all. Every published agreement fixture is
-      regenerated; the one-sided agreement becomes the counter-example, which is what all of them
-      look like today.
+- [x] **WP-2.9 — Both parties sign the agreement (ADR-038)** · 1.3 · M
+      Done, 13 Sep 2026 (`fdt-commons` v0.32.0, finding 75). `fdt-p:countersignature` is replaced
+      by `fdt-p:signature` with `fdt-p:signatureRole` and `fdt-p:onBehalfOf`; both sides sign the
+      same canonical form — the agreement with *every* signature excluded, so neither covers the
+      other. `fdts:AgreementShape` counts the sides with two `sh:qualifiedValueShape`
+      constraints, because a shape asking for "at least one signature" passes every agreement
+      this repository had.
+      **The exchange, and why it is the Handler's step.** The station signs the assigner's side,
+      emits `negotiation.awaiting-signature` with the digest, and **runs nothing**; the Handler
+      checks and signs the assignee's side at `POST /visits/{id}/agreement/signature`; the station
+      verifies it, emits `negotiation.active` and only then queues the run. Driven by the Handler
+      because a station cannot reach one that chose `mode: poll` — an exchange only the callback
+      deployments could complete would be a contract half the ecosystem could not meet.
+      **The distinction that needed a term.** No controller holds a key, so the station signs as
+      their agent and `fdt-p:onBehalfOf` says so; a signature naming as its principal the party
+      who made it is refused, because a party is not their own agent. *The controller signed* and
+      *the station signed for the controller* would otherwise be one fact, and a verifier would
+      read the weaker as the stronger.
+      **What holds it to the rule rather than to its own reading**: a real station's agreement,
+      signed by a real station key and a real owner key, goes through `tools/derivation.py` §7.7–9
+      in `test_the_contracts_own_checker_verifies_both_signatures`; and `tests/e2e` runs the real
+      Handler against the real station, which is where a disagreement about canonicalisation would
+      surface. Three counter-examples: the one-sided agreement, an agent's signature presented as
+      the party's, and an agreement changed after it was signed.
+      **Q27 open**: what outcome a visit gets when the assignee never signs. The default taken is
+      that the station records **nothing** — the visit rests at `negotiation.awaiting-signature`
+      until it is withdrawn, exactly as a pending approval does — while the Handler reports its
+      own run `failed` when its follow deadline expires. Two parties describing the same visit
+      differently is the cost of that default and is why Q27 is open. Deliberately not `Refused`:
+      that word is a controller's governance decision (ADR-026) and no controller took one.
+      Left for later, and stated rather than assumed: the Handler does **not** verify the
+      assigner's signature cryptographically — that needs the station's key bound out of band, and
+      a key fetched from the party being verified proves only that they hold the key they
+      nominated. What it does check is in `protocol/signing.py`.
+- [x] **WP-2.9a — The checks that could not fail (finding 76)** · 2.9 · S
+      Done, 13 Sep 2026 (`fdt-commons` v0.33.0, finding 76). WP-2.9's mutation run broke each rule
+      ADR-038 had just introduced and asked whether anything went red. **Seven of twenty-five
+      survived**, and they were not scattered — they were nearly the rules WP-2.9 had just
+      written: the shape's assignee constraint and `fdt-p:signatureRole` could both be weakened to
+      optional, `tools/derivation.py`'s *each side signed* could be deleted outright, the station
+      could read the party who must sign from the request instead of the agreement, and all three
+      of the Handler's pre-signing checks could be removed, with every suite green.
+      **One cause, four times.** The counter-example for "both sides sign" omitted the *assigner's*
+      signature, because that is the side ADR-028 forgot and the side the finding was about — so
+      the assignee constraint was never the one under test and was free to go. The same file lived
+      only in `examples/invalid/`, which the SHACL pass reads and the derivation checker does not.
+      And the Handler's `assigner_signature_over` had no test at all: three complaints written,
+      none asserted.
+      Symmetric rules now have symmetric counter-examples (`agreement-signed-by-the-assignee-only`
+      and `-assigner-only`, `agreement-signature-that-does-not-say-which-side`,
+      `invalid/derivation/agreement-only-the-station-ever-signed`), the Handler's three checks have
+      `tests/test_signing.py`, and the station has a visit that never says who it is for — proving
+      it reads the signing party from the agreement it signed.
+      **One rule the mutants only pointed at.** §7 rule 6 asked that an agreement *carry* an
+      assigner and an assignee and never compared them with the offer and request it derives from,
+      so an agreement could bind anybody. Survivable while a signature was optional; not once
+      ADR-038 made the assignee the party whose signature concludes it. Rule 6 now requires the
+      assigner to be the offer's and the assignee to be the request's, and **PEP 1** rejects a
+      visit whose descriptor and ODRL request name different consumers — before a controller is
+      shown a party's name the agreement will not bind, and before the station signs.
+      25/25 caught after this. One guard is recorded as *unevidenced*: `tests/validate.py` now
+      fails a counter-example naming no expected message, and no mutation can hold it, because the
+      corpus state where it matters is the one it exists to prevent.
 - [ ] **WP-2.10 — Delegated standing, and the auditor's read surface (ADR-039)** · 2.4 · L
       A controller may delegate to a **named person or body** — a data access committee, a
       `[METC ref.]` — who inherits their standing and cannot exceed it, may supply evidence and

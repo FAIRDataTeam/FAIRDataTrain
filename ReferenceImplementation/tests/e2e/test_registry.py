@@ -36,6 +36,7 @@ from fdt_handler.protocol.client import StationClient
 from fdt_handler.run.catalogue import FixtureCatalogue
 from fdt_handler.run.depot import DepotCatalogue
 from fdt_handler.run.registry import RegistryCatalogue
+from fdt_handler.protocol.signing import OwnerKey
 from fdt_handler.runner import Runner
 from fdt_registry.api import build_app as build_registry
 from fdt_registry.core.config import RegistrySettings, Source, SourceKind
@@ -49,7 +50,13 @@ from fdt_station.core.config import (
     StationSettings,
 )
 
-from conftest import COMMONS, STATION_IRI, STATION_URL, plan_with_min_evidence
+from conftest import (
+    COMMONS,
+    OWNER_PARTY,
+    STATION_IRI,
+    STATION_URL,
+    plan_with_min_evidence,
+)
 
 ONTOLOGY = COMMONS.parent / "FDT-O"
 DEPOT_IRI = "https://example.org/fdt/depot/community"
@@ -179,7 +186,8 @@ def test_the_registry_resolves_the_target_set_and_names_what_it_left_out(
 
 
 def test_the_visit_runs_at_the_station_the_registry_chose(
-    catalogue: RegistryCatalogue, ecosystem: dict[str, TestClient], tmp_path: Path
+    catalogue: RegistryCatalogue, ecosystem: dict[str, TestClient], tmp_path: Path,
+    signing_keys: dict[str, Path],
 ) -> None:
     """From "which station?" to a delivered envelope, without the Handler being told either.
 
@@ -200,6 +208,7 @@ def test_the_visit_runs_at_the_station_the_registry_chose(
         handler="https://handler.cardionet.example/fdt/v1",
         agent="m.devries@cardionet.example",
         client_for=lambda _endpoint: StationClient(_endpoint, client=ecosystem["ut"]),
+        owner_key=OwnerKey.load(signing_keys["owner"], OWNER_PARTY),
         follow_deadline=30.0,
     )
     events: list[dict[str, Any]] = []

@@ -177,6 +177,11 @@ def components(*, run_plan: bool, host: str = "127.0.0.1") -> list[Component]:
                 "--handler", handler["FDT_HANDLER_IRI"],
                 "--agent", handler["FDT_HANDLER_AGENT"],
                 "--contracts", str(COMMONS),
+                # ADR-038. The assignee's side of every agreement is signed with the train
+                # owner's key, and without it the visits stop at `negotiation.awaiting-signature`
+                # — the station having signed its half and nothing having run.
+                "--owner", handler["FDT_HANDLER_OWNER"],
+                "--signing-key", str(ROOT / handler["FDT_HANDLER_SIGNING_KEY"]),
                 # A Handler has no settings class, so what every other component reads from its
                 # profile the Handler is told on the command line — from the same profile.
                 *[
@@ -188,9 +193,13 @@ def components(*, run_plan: bool, host: str = "127.0.0.1") -> list[Component]:
                 "--host", host, "--port", str(port),
             ],
             identity=handler["FDT_HANDLER_IRI"],
-            # Read for the four values above rather than exported: a Handler has no settings
-            # class, because it is configured by the plan it is given and the arguments it is
-            # dispatched with.
+            # The one thing that does go into the environment: `_mint_agreement_keys` runs
+            # before the process starts and writes the key the argv above points at. It reads
+            # the environment, because that is the one place it sees for every component.
+            extra={"FDT_HANDLER_SIGNING_KEY": str(ROOT / handler["FDT_HANDLER_SIGNING_KEY"])},
+            # Otherwise read for the values above rather than exported: a Handler has no
+            # settings class, because it is configured by the plan it is given and the
+            # arguments it is dispatched with.
         ))
     return listed
 
@@ -294,6 +303,7 @@ def up(logs: Path, *, run_plan: bool, timeout: float) -> int:
         # `make up-processes` failing on a file the other path creates.
         environment = _environment(component)
         _mint_creator_keys(environment)
+        _mint_agreement_keys(environment)
         component.process = subprocess.Popen(  # noqa: S603 — our own argv, no shell
             [str(python), *component.argv],
             cwd=str(ROOT), env=environment, stdout=handle, stderr=handle,
@@ -476,7 +486,38 @@ def exec_component(name: str, host: str) -> int:
     for key, value in environment.items():
         os.environ[key] = value
     _mint_creator_keys(environment)
+    _mint_agreement_keys(environment)
     os.execv(sys.executable, [sys.executable, *component.argv])  # noqa: S606 — our own argv
+
+
+def _mint_agreement_keys(environment: dict[str, str]) -> None:
+    """Write the agreement signing keys a component was configured with and does not have.
+
+    ADR-038: every agreement carries a signature from each party. A station signs the assigner's
+    side, so it needs a key; the Handler signs the assignee's with the train owner's key; and the
+    station needs the owner's PUBLIC key before it starts, or it refuses a signature it cannot
+    check. Three files, derived by `deploy/agreement_keys.py` so that containers sharing no
+    filesystem still agree — the same trick and the same warning as the creator key above.
+
+    Without this a station comes up, concludes nothing, and says so; the visits rest at
+    `negotiation.requested` and every console screen downstream of a run is empty. That is the
+    honest behaviour and it is not a testbed.
+    """
+    import agreement_keys                                # deploy/, on the path beside this file
+
+    signing = environment.get("FDT_STATION_SIGNING_KEY")
+    station_iri = environment.get("FDT_STATION_IRI")
+    if signing and station_iri and not Path(signing).is_file():
+        agreement_keys.write_signing_key(
+            Path(signing), agreement_keys.station_key_id(station_iri))
+
+    parties = environment.get("FDT_STATION_PARTY_KEYS")
+    if parties and not Path(parties).is_file():
+        agreement_keys.write_party_keys(Path(parties))
+
+    owner = environment.get("FDT_HANDLER_SIGNING_KEY")
+    if owner and not Path(owner).is_file():
+        agreement_keys.write_signing_key(Path(owner), agreement_keys.OWNER_KEY_ID)
 
 
 def _mint_creator_keys(environment: dict[str, str]) -> None:

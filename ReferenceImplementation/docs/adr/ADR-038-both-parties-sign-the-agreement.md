@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Accepted**, 13 September 2026 — answered by Luiz on Q12's remaining half. The answer as given is in `OPEN-QUESTIONS.md` under Q12; anything here beyond it is drafting, and is marked where it goes furthest. |
+| **Status** | **Accepted**, 13 September 2026 — answered by Luiz on Q12's remaining half. **Implemented** the same day as WP-2.9 (`fdt-commons` v0.32.0, finding 75) and made provable by WP-2.9a (v0.33.0, finding 76 — a mutation run found that seven of this decision's own rules could be deleted with every suite green). The answer as given is in `OPEN-QUESTIONS.md` under Q12; anything here beyond it is drafting, and is marked where it goes furthest. |
 | **Deciders** | Luiz Olavo Bonino da Silva Santos |
 | **Relates to** | ADR-007 (ODRL), ADR-011 (controller ≠ operator), ADR-014 (one agreement per hop), ADR-027 (every decision is an event), ADR-028 (counter-signed agreements — **extended here**), ADR-035 (standing at a station); `protocol/agreement-derivation.md` §6; **Q12** |
 

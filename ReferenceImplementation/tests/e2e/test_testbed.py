@@ -435,3 +435,116 @@ def test_both_runners_mint_the_depots_key_set() -> None:
     assert source.count("_mint_creator_keys(") >= 3, (
         "one of the two runners no longer mints the Depot's key set before starting it"
     )
+
+
+# --------------------------------------------------------------- the agreement signing keys
+#
+# ADR-038: a station signs the assigner's side of every agreement it concludes, and the Handler
+# signs the assignee's with the train owner's key. Three files, and each one is a different
+# mistake if it goes wrong.
+
+
+def test_the_party_keys_a_station_reads_carry_no_private_material(tmp_path: Path) -> None:
+    """The one that would be worst, and the one easiest to get wrong by symmetry.
+
+    A station holding the train owner's *private* key could sign in the owner's name, which is
+    precisely the arrangement two signatures exist to rule out: the record would carry an
+    assignee's signature the assignee never made, verifying perfectly. `write_party_keys` builds
+    from `jwk(..., private_half=False)`, and this asserts the property rather than the structure,
+    because the structure is one argument away from the other value.
+    """
+    import agreement_keys
+
+    path = tmp_path / "agreement-party-keys.json"
+    agreement_keys.write_party_keys(path)
+    document = json.loads(path.read_text())
+
+    assert list(document) == [agreement_keys.OWNER]
+    [key] = document[agreement_keys.OWNER]["keys"]
+    assert (key["kty"], key["crv"], key["kid"]) == ("OKP", "Ed25519", agreement_keys.OWNER_KEY_ID)
+    for private in ("d", "p", "q", "dp", "dq", "qi", "k", "oth"):
+        assert private not in key, f"a station's party key set carries private material: {private}"
+
+
+def test_a_signing_key_set_does_carry_the_private_half(tmp_path: Path) -> None:
+    """The other direction, which no other test would notice.
+
+    A key set with only public keys in it is what a party *publishes*, not what it signs with —
+    and a station handed one would start, conclude nothing, and report a missing signing key.
+    Both halves of `jwk()` matter, so both are asserted.
+    """
+    import agreement_keys
+
+    path = tmp_path / "station-signing-key.json"
+    key_id = agreement_keys.station_key_id("https://example.org/fdt/station/ut")
+    agreement_keys.write_signing_key(path, key_id)
+
+    [key] = json.loads(path.read_text())["keys"]
+    assert key["kid"] == key_id
+    assert key["d"] and key["x"], "a signing key set without a private half signs nothing"
+
+
+def test_the_two_sides_keys_are_different_keys() -> None:
+    """Derived per key id, not one key wearing two names.
+
+    One key shared between the station and the train owner would make both signatures verify
+    against the same public half — and an agreement whose two signatures are one party's is
+    exactly what the roles and the party binding exist to detect. It would pass every other test
+    here, because every other test only asks whether the signatures verify.
+    """
+    import agreement_keys
+
+    station = agreement_keys.jwk(
+        agreement_keys.station_key_id("https://example.org/fdt/station/ut"), private_half=True)
+    owner = agreement_keys.jwk(agreement_keys.OWNER_KEY_ID, private_half=True)
+    assert station["x"] != owner["x"]
+    assert station["d"] != owner["d"]
+
+
+def test_the_derived_agreement_key_verifies_what_it_signed() -> None:
+    """The property that lets the compose have no volume, for the agreement keys this time.
+
+    The station container holds the owner's public half and the Handler container signs with the
+    private half; they share no filesystem and agree only because both derive from one constant.
+    If that stops being deterministic the symptom is every visit stopping at
+    `negotiation.awaiting-signature` with the station reporting a signature that does not verify —
+    and nothing on either side able to say why. This is what would fail first instead.
+    """
+    import base64
+
+    import agreement_keys
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
+    digest = "sha256:" + "0" * 64
+    signature = agreement_keys._private_key(agreement_keys.OWNER_KEY_ID).sign(digest.encode())
+
+    published = agreement_keys.jwk(agreement_keys.OWNER_KEY_ID, private_half=False)
+    raw = base64.urlsafe_b64decode(published["x"] + "=" * (-len(published["x"]) % 4))
+    Ed25519PublicKey.from_public_bytes(raw).verify(signature, digest.encode())
+
+
+def test_both_runners_mint_the_agreement_keys() -> None:
+    """The same two paths as the Depot's creator key, and the same way of getting it wrong.
+
+    A station configured with a signing key and without one does not fail loudly at a file it
+    cannot read — it starts, concludes nothing, and every visit rests at
+    `negotiation.requested`. The testbed would come up with every console screen downstream of a
+    run empty, which reads as a broken console rather than a missing file.
+    """
+    source = (DEPLOY / "testbed.py").read_text()
+    assert source.count("_mint_agreement_keys(") >= 3, (
+        "one of the two runners no longer mints the agreement signing keys before starting"
+    )
+
+
+def test_every_station_profile_that_negotiates_has_a_signing_key() -> None:
+    """A station with no key concludes nothing (ADR-038), so a profile without one is a station
+    that would come up and never agree to anything — which is the testbed with its point removed.
+    """
+    for profile in sorted(PROFILES.glob("station-*.env")):
+        values = read_profile(profile)
+        assert values.get("FDT_STATION_SIGNING_KEY"), f"{profile.name} signs no agreement"
+        assert values.get("FDT_STATION_PARTY_KEYS"), (
+            f"{profile.name} could not check an assignee's signature and would refuse every one "
+            f"as a key it was never told about"
+        )
