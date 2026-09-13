@@ -8,13 +8,15 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** **station S5, then H2's dispatch step.** The Depot's write surface is done (WP-5.2b): `fdt-depot` 0.2.0 publishes, is taken from and is withdrawn from, against `fdt-commons` **v0.29.0** — which gained `protocol/train-publication.md` and two findings the implementation turned up (**71**, "signed over both" was never a definition; **72**, a Depot had no way to say it accepts no publications). `tests/e2e/test_one_rule_two_evaluators.py` holds the Depot's licence evaluation and the station's `OdrlNegotiator` to one another, which is what ADR-036 means by *whatever a station concludes about a clause, a Depot must conclude about the same clause*. Q21 was answered on 13 September 2026 (ADR-035, ADR-036) and no longer blocks anything. **M5's browser acceptance** is one command away: `make up` brings the whole ecosystem up in Docker, consoles included, and its Depot can now be withdrawn from and watched. Eleven screens exist: station S1, S2, S3, S6, S7, S8 and the public page S9; Handler H1, H2, H3 and H4; plus the Depot and registry read consoles. S4, the access-condition builder, is built (WP-5.5a) — with it a controller states their own terms at a station for the first time, which is what `fdt-commons` finding 73 recorded as missing. What is left is S5 and H2's dispatch step. WP-5.0 through WP-5.4 are done: FDT-O is at 4.0.0, a train declares the data it needs, a Depot is the authority for it, a registry answers which stations hold it and names the property the others were missing, and two stations in two networks show the difference between a decision a machine may take and one it may not. The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always.
+**Next:** **H2's dispatch step.** Station S5 is done (WP-5.5b, `fdt-commons` v0.34.0 and
+finding 77): a controller reads the agreements concluded over their data, with the terms rendered
+from the agreement document itself and the two ADR-038 signatures told apart. The Depot's write surface is done (WP-5.2b): `fdt-depot` 0.2.0 publishes, is taken from and is withdrawn from, against `fdt-commons` **v0.29.0** — which gained `protocol/train-publication.md` and two findings the implementation turned up (**71**, "signed over both" was never a definition; **72**, a Depot had no way to say it accepts no publications). `tests/e2e/test_one_rule_two_evaluators.py` holds the Depot's licence evaluation and the station's `OdrlNegotiator` to one another, which is what ADR-036 means by *whatever a station concludes about a clause, a Depot must conclude about the same clause*. Q21 was answered on 13 September 2026 (ADR-035, ADR-036) and no longer blocks anything. **M5's browser acceptance** is one command away: `make up` brings the whole ecosystem up in Docker, consoles included, and its Depot can now be withdrawn from and watched. Eleven screens exist: station S1, S2, S3, S6, S7, S8 and the public page S9; Handler H1, H2, H3 and H4; plus the Depot and registry read consoles. S4, the access-condition builder, is built (WP-5.5a) — with it a controller states their own terms at a station for the first time, which is what `fdt-commons` finding 73 recorded as missing. What is left is S5 and H2's dispatch step. WP-5.0 through WP-5.4 are done: FDT-O is at 4.0.0, a train declares the data it needs, a Depot is the authority for it, a registry answers which stations hold it and names the property the others were missing, and two stations in two networks show the difference between a decision a machine may take and one it may not. The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always.
 
 | | | |
 |---|---|---|
 | **M0** Foundations | ✅ done | 12 Sep 2026 |
 | **M1** One visit | ✅ done | 12 Sep 2026 |
-| **M5** Testbed (new — ADR-029) | 🟨 in progress — **its acceptance criterion is met** (`make up && make acceptance`, 13 Sep 2026: 15/15 screens carrying live data in a real browser, no browser-level noise, and a train published to the Depot and found through the registry by its data requirement). WP-5.0–5.4, 5.2b and 5.5a done; WP-5.5 at 12 of 13 screens — **S5 and H2's dispatch step are what is left**; WP-2.9 is done, so S5 is unblocked and now has two signatures to render rather than one | |
+| **M5** Testbed (new — ADR-029) | 🟨 in progress — **its acceptance criterion is met** (`make up && make acceptance`, 13 Sep 2026: 16/16 screens carrying live data in a real browser, no browser-level noise, and a train published to the Depot and found through the registry by its data requirement). WP-5.0–5.4, 5.2b and 5.5a done; WP-5.5 at 13 of 13 screens — **H2's dispatch step is what is left**; WP-2.9 is done, so S5 is unblocked and now has two signatures to render rather than one | |
 | **M2** Fan-out and governance | 🟨 in progress — WP-2.4's controller API done | |
 | **M3** Multi-hop | ⬜ not started | |
 | **M4** Hardening and alignment | ⬜ not started | |
@@ -433,11 +435,15 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       That found **finding 64 / Q22**: 49 FDT-O terms carry no `rdfs:label`, among them every
       interaction mechanism a station publishes.
 
-      **Still to build: station S5** (agreement detail), which reads a controller's own
-      agreements and needs an agreement endpoint on the controller surface that does not exist
-      yet — S4 built the first half of that surface. The Depot's publish/withdraw surface is
-      WP-5.2b and S4 is WP-5.5a, both done.
-      H2 stops on the same line for the same reason: it composes a `fdt-run:Plan` and hands it
+      **S5 is built (WP-5.5b).** The controller surface gained `GET /controller/agreements` and
+      `/controller/agreements/{id}` (`fdt-commons` v0.34.0, finding 77) — scoped the way the
+      approval queue is, because which requests are being made of whose data is itself
+      disclosure. The screen reads the **terms out of the agreement document**, not out of JSON:
+      the agreement is what both parties pinned by digest and is the one thing here that must not
+      have a second representation. It renders `signedBy` and `onBehalfOf` apart (ADR-038), shows
+      a one-sided agreement as a state rather than a fault, and declines to offer the artboard's
+      **Revoke** and **Suspend** buttons, which no contract describes.
+      **Still to build: H2's dispatch step.** It composes a `fdt-run:Plan` and hands it
       over, because starting a run means dispatching a train on somebody's behalf and nothing
       yet says who may do that for whom. The Handler's own CLI already declines to grow a "run
       this" endpoint on that reasoning, and adding one from a console would be taking the
@@ -669,6 +675,31 @@ surface, and doing any of them by editing code first is the thing this project d
       25/25 caught after this. One guard is recorded as *unevidenced*: `tests/validate.py` now
       fails a counter-example naming no expected message, and no mutation can hold it, because the
       corpus state where it matters is the one it exists to prevent.
+- [x] **WP-5.5b — Station S5, the agreement a controller can read** · 5.5a · M
+      Done, 13 Sep 2026 (`fdt-commons` v0.34.0, finding 77). A controller's surface had the two
+      documents that come *before* an agreement — the conditions they set, the queue of what needs
+      them now — and nothing for the record those two exist to produce. `GET /controller/agreements`
+      and `/controller/agreements/{id}`, scoped in `AgreementStore` rather than in the routes: a
+      router that fetched an agreement and then decided whether to show it is one refactor away
+      from showing it.
+      **The terms are deliberately not in the JSON.** The agreement is the RDF document both
+      parties pinned by digest, and a JSON projection would be a second thing to keep true with
+      the console reading the copy nobody else does. The contract returns `document.url` and the
+      digest; S5 fetches it and renders it with `rdf/policy.ts`, the same code S4 and S9 use.
+      **`signedBy` and `onBehalfOf` are rendered apart** (ADR-038). No controller here holds a key,
+      so every assigner's signature is the station's, made as their agent — and *the controller
+      signed* read off a screen that means *the station signed for the controller* is the one
+      failure the mechanism exists to prevent. A one-sided agreement shows as a state, not a
+      fault: the station signs, announces what it needs, and waits.
+      **Two of the artboard's buttons are not built and say so.** Revoke and Suspend are write
+      operations no contract describes — revocation after an agreement is final is one of the gaps
+      `fdt-commons` finding 10 records DSP leaving to FDT, and what it does to a queued job, to
+      results already delivered and to the deletion duty is an ADR, not a button.
+      On the way past: `AgreementRecord` kept its own copy of the assignee, taken from the visit
+      descriptor, and nothing read it — so it had drifted unnoticed from the agreement it was
+      supposed to describe. Both parties now come off the graph (finding 76's rule, applied where
+      it was still broken).
+      Station 376 tests, console 65, 16/16 screens in a real browser, 7/7 mutants caught.
 - [ ] **WP-2.10 — Delegated standing, and the auditor's read surface (ADR-039)** · 2.4 · L
       A controller may delegate to a **named person or body** — a data access committee, a
       `[METC ref.]` — who inherits their standing and cannot exceed it, may supply evidence and
