@@ -353,6 +353,16 @@ statement.
 - [ ] **WP-2.3 — Poll dispatch (Handler API)** · 1.5 · M
       Contract complete; inherits the M2 scenario's fixture gaps.
 - [ ] **WP-2.4 — Manual approval, controller API, Individual Gateway v0** · 1.3 · XL
+      *(Controller API **done** — `controller-api.yaml` in fdt-commons 0.24.0, the station's
+      queue and decision, and console **S3 Approvals**. The queue is scoped to the
+      authenticated controller and another's case answers as one that does not exist; what the
+      person was shown is pinned and a decision on a case that has since changed is refused;
+      a controller may supply evidence and may not waive a prohibition, and a grant the offer
+      still does not cover ends Refused rather than being forced through. Findings 62 and 63.
+      **Still to do: the Individual Gateway**, and the station-side "do you hold data I
+      control" probe, which is the part that needs its own contract and its own
+      counter-examples — it is a question about a named individual and must not become a probe.
+      The identity model behind all of it is still Q21's placeholder.)*
       The controller API **still has no contract anywhere** (sweep I) and **ADR-032** now sets
       what it must carry: the recommendation, the evidence behind it, the decision, and the four
       things the agreement records — the mode and the rule that imposed it, who decided and under

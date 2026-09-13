@@ -32,7 +32,7 @@ from fdt_handler.run.catalogue import FixtureCatalogue
 from fdt_handler.runner import RunReport, Runner
 from fdt_handler.runs import RunStore
 from fdt_station.app import create_app
-from fdt_station.core.config import StationSettings
+from fdt_station.core.config import DecisionMode, StationSettings
 
 ONTOLOGY = COMMONS.parent / "FDT-O"
 
@@ -196,6 +196,98 @@ def test_a_rejected_result_is_reported_as_rejected_on_both_consoles(
     assert run["outcomes"]["rejected"] == 1
     assert run["outcomes"]["refused"] == 0
     assert run["outcomes"]["failed"] == 0
+
+
+def test_a_controller_decides_and_the_run_carries_their_words(
+    station_settings: StationSettings, tmp_path: Path
+) -> None:
+    """WP-2.4 end to end: a station that decides nothing, a person who does, and a consumer who
+    reads what they said.
+
+    This is the loop ADR-032 exists for, with every component real. The station is in `manual`
+    decision mode, so it evaluates the request, recommends, and stops. The controller reads the
+    case on their own surface, refuses, and states why. The Handler — which has no idea any of
+    that happened — reports the visit as **Refused** with the controller's own sentence in it.
+
+    The words are the point. A run that reported this as "failed" would be telling a consumer
+    that something broke, when what happened is that a person considered their request and said
+    no; and one that reported it as "rejected" would point them at their result rather than at
+    their request (ADR-026).
+    """
+    controller = "https://example.org/fdt/party/ut-life-sciences"
+    settings = station_settings.model_copy(update={
+        "decision_mode": DecisionMode.MANUAL,
+        "controller_tokens": {"ut-secret": controller},
+    })
+    words = "The committee does not release this extract outside the consortium."
+
+    app = create_app(settings)
+    with TestClient(app, base_url=STATION_URL) as http:
+        contracts = HandlerContracts(COMMONS)
+        runs = RunStore()
+        runner = Runner(
+            contracts=contracts,
+            catalogue=FixtureCatalogue(contracts, endpoints={STATION_IRI: STATION_URL}),
+            handler="https://handler.cardionet.example/fdt/v1",
+            client_for=lambda endpoint: StationClient(endpoint, client=http),
+            follow_deadline=5.0,
+        )
+
+        # The controller decides as soon as the case appears, from the other side of the
+        # station, while the Handler is still following the visit.
+        as_controller = {"Authorization": "Bearer ut-secret"}
+
+        def refuse_the_moment_it_arrives(_: object) -> None:
+            queue = got(http, "/controller/approvals", headers=as_controller)["approvals"]
+            for item in queue:
+                case = got(http, f"/controller/approvals/{item['id']}",
+                           headers=as_controller)
+                http.post(
+                    f"/controller/approvals/{item['id']}/decision",
+                    json={"decision": "refuse", "shownAtDecision": case["shown"],
+                          "decidedUnderAuthority": "https://example.org/fdt/authority/dac",
+                          "reason": words,
+                          "departureReason": "Outside the consortium regardless of the match."},
+                    headers=as_controller,
+                )
+
+        report = runner.run(
+            COMMONS / "examples" / "plan-gene-disease-single.jsonld",
+            on_start=runs.remember,
+            on_event=lambda _station, event: (
+                refuse_the_moment_it_arrives(event)
+                if event["type"] == "negotiation.pending-approval" else None
+            ),
+        )
+        handler = TestClient(
+            build_app(contracts, runs, handler="https://handler.cardionet.example/fdt/v1")
+        )
+        [ours] = got(handler, f"/runs/{report.run}/visits")["visits"]
+        decided = got(http, "/controller/approvals?includeDecided=true",
+                      headers=as_controller)["approvals"]
+        # and the station's own status, which is what a Handler coming back later reads —
+        # a refusal reachable only by replaying the event stream reaches a consumer as
+        # "Refused" with nothing after it (ADR-026).
+        status = got(http, f"/visits/{ours['visit']}")
+
+    # what the consumer is told
+    assert ours["outcome"] == "refused", ours
+    assert ours["reason"] == words
+    assert ours["outcome"] not in ("rejected", "failed")
+    marks = {c["checkpoint"]: c["status"] for c in ours["checkpoints"]}
+    assert marks["NEG"] == "failed", marks
+    assert marks["PEP2"] == "not-reached", marks
+    assert status["state"] == "Refused"
+    assert status["reason"] == words
+
+    # and what the controller's own record says about the act (ADR-032 §3)
+    [record] = [a["decided"] for a in decided]
+    assert record["decision"] == "refuse"
+    assert record["decidedBy"].startswith("approver:")
+    assert record["decidedUnderAuthority"] == "https://example.org/fdt/authority/dac"
+    assert record["shownAtDecision"].startswith("sha256:")
+    assert record["followedRecommendation"] is False
+    assert record["departureReason"]
 
 
 def test_the_depot_console_leads_with_what_it_withholds(

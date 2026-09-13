@@ -301,7 +301,14 @@ identity model to say who may use it. The visit protocol's tokens answer a diffe
 they say who is visiting on behalf of which consumer in which network, not who operates this
 station.
 
-**Placeholder taken:** a bearer token configured out of band (`FDT_STATION_ADMIN_TOKEN`). In
+**Placeholder taken:** a bearer token configured out of band (`FDT_STATION_ADMIN_TOKEN`), and
+— since WP-2.4's controller API landed — a second one per controller
+(`FDT_STATION_CONTROLLER_TOKENS`, credential → the controller it proves). Three parties ask
+three different things of a station and each needs its own credential (ADR-011): a visit's token
+says who is visiting on behalf of which consumer, the admin token says who may configure the
+station, and a controller token says whose data somebody is deciding about. A station with no
+controller credentials configured has **no controller surface at all**, which is honest rather
+than broken: nobody has been given standing to decide there. In
 `production` run mode a station with no admin token configured **refuses every write** and says
 so in the response and in the console, rather than offering a control that returns 401 on every
 use. In `development` run mode writes are open and the console says that too — a testbed with a
