@@ -11,20 +11,22 @@ released on its own.
 ```sh
 git submodule update --init --recursive
 make check          # the gate: every contract validator in fdt-commons and FDT-O
+make up             # the whole ecosystem in Docker, consoles included
+make acceptance     # and every console opened in a real browser against it
 ```
 
 ## Components
 
 | Submodule | What it is | Status |
 |---|---|---|
-| [`fdt-commons`](https://github.com/FAIRDataTeam/fdt-commons) | **the contracts**: vocabularies, SHACL shapes, JSON Schemas, JSON-LD contexts, the visit protocol, the fixtures | v0.29.0 — twelve validation passes |
+| [`fdt-commons`](https://github.com/FAIRDataTeam/fdt-commons) | **the contracts**: vocabularies, SHACL shapes, JSON Schemas, JSON-LD contexts, the visit protocol, the fixtures | v0.31.0 — thirteen validation passes |
 | [`FDT-O`](https://github.com/FAIRDataTeam/FDT-O) | the ontology: what a train, payload, hosted dataset, dataset part, catalogue, controller and station type *are* | v4.0.0 on branch `fdt-o-v2` ([PR #1](https://github.com/FAIRDataTeam/FDT-O/pull/1)) |
-| [`FAIRDataStation-py`](https://github.com/FAIRDataTeam/FAIRDataStation-py) | the station: PEP 1–3, agreements, metadata, adapters | M1 done; publishes its catalogue and data shapes — 210 tests |
+| [`FAIRDataStation-py`](https://github.com/FAIRDataTeam/FAIRDataStation-py) | the station: PEP 1–3, agreements, metadata, adapters | M1 done; publishes its catalogue and data shapes, and a data controller states their own access conditions on it (ADR-011) — 327 tests |
 | [`FAIRDataTrainHandler`](https://github.com/FAIRDataTeam/FAIRDataTrainHandler) | the Handler: run model, orchestration, conditions, failure policy | M1 done; resolves stations from a registry and trains from their Depot — 72 tests |
 | [`IndividualGateway`](https://github.com/FAIRDataTeam/IndividualGateway) | the data controller's agent across stations | skeleton |
 | [`FDTRegistry`](https://github.com/FAIRDataTeam/FDTRegistry) | the **metadata registry**: harvests and indexes what Depots and Stations publish; not a trust anchor (ADR-029). Answers a train's data requirement by structural coverage and names the property a near-matching station was missing (ADR-030) | **v0.1.0** — 28 tests |
 | [`TrainDepot`](https://github.com/FAIRDataTeam/TrainDepot) | the **Train Depot**: the authority for a train — payload bytes, digests it computes rather than repeats, parameters, the input requirement, declared output, the creator's offer and public keys (ADR-029). A train is **published** to it by its creator, **taken** from it under that creator's licence, and **withdrawn** from it without ceasing to resolve (ADR-036) | **v0.2.0** — 97 tests |
-| [`FDTConsole`](https://github.com/FAIRDataTeam/FDTConsole) | one front-end, three role-based apps | design system and generated contract types; no screens yet |
+| [`FDTConsole`](https://github.com/FAIRDataTeam/FDTConsole) | one front-end, three role-based apps | twelve screens: station S1–S4 and S6–S9, Handler H1–H4, plus read consoles for the Depot and the registry — 50 tests |
 
 The Java prototypes — `FAIRDataStation`, `TrainHandler`, `TrainHandler-server`,
 `TrainHandler-client`, `TrainOrchestrator` — are the earlier lineage and are not evolved
@@ -80,7 +82,10 @@ ReferenceImplementation/
 Each ends in a scenario that is recorded as an end-to-end test and can be watched running:
 `make e2e` runs every component against the others in one process, and `make up` brings the
 ecosystem up in Docker — two stations, a Depot, a registry, a Handler and the consoles — to look
-at in a browser. The order and the exit criteria are fixed; durations are not. (`make
+at in a browser. **`make acceptance` then opens every console in a real browser against it**, and
+asserts that each screen carries the live run's own data rather than an error state: a suite under
+jsdom has no same-origin policy and no real network, so a console that reports every component
+unreachable passes all of it (Q23) — and did. The order and the exit criteria are fixed; durations are not. (`make
 up-processes` runs the same testbed straight out of the checkout, which is what you want while
 changing a component: a container build stands between every edit and the screen. The three
 *deployment* profiles are still WP-4.3's, and are a different question from a testbed.)
@@ -102,8 +107,7 @@ when its acceptance criterion has been run. **M0 and M1 are done. M5 — the tes
 progress: a Train Depot, a metadata registry and two stations run against each other under a
 Handler; `make e2e` chooses where to send a visit by asking which stations hold the data, and a
 train is now published to its Depot, taken from it and withdrawn from it (ADR-036).**
-Next: station S4 and S5 — a controller's own access conditions and the agreements that resulted —
-and H2's dispatch step.
+Next: station S5 — the agreements a controller's conditions produced — and H2's dispatch step.
 
 Decisions and their conservative defaults are in [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md);
 contract defects and what closed them are in `fdt-commons/FINDINGS.md`, by number; dated audits

@@ -139,6 +139,15 @@ up:  ## bring the testbed up in Docker: two stations, a Depot, a registry, a Han
 	@$(COMPOSE) logs --no-log-prefix seed
 	@$(PY_HOST) deploy/testbed.py ready --consoles $(CONSOLES)
 
+.PHONY: acceptance
+acceptance:  ## M5: open every console in a real browser against the running testbed
+	@echo "── acceptance (browser) ─────────────────────────────────────"
+	@test -d $(CONSOLE)/node_modules/playwright || \
+	  (echo "playwright is not installed: run 'npm install' in FDTConsole" >&2; false)
+	@$(PY_HOST) deploy/testbed.py status >/dev/null 2>&1 || \
+	  (echo "the testbed is not up: run 'make up' first" >&2; false)
+	@cd $(CONSOLE) && npm run --silent acceptance
+
 .PHONY: down
 down:  ## stop the testbed and remove its containers
 	@$(COMPOSE) down --remove-orphans

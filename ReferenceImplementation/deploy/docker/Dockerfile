@@ -47,6 +47,14 @@ ENV FDT_COMMONS=/fdt/fdt-commons \
 
 FROM contracts AS tools
 
+# The seed step also publishes a train (ADR-036), and publishing means canonicalising the
+# description and hashing it over the payload exactly as the Depot will — so it uses the Depot's
+# own implementation of `train-publication.md` §1 rather than a second copy of it. Two
+# implementations of one digest disagree eventually, and the disagreement arrives as a signature
+# that does not verify, with nothing on either side able to say why.
+COPY TrainDepot/ /build/depot/
+RUN pip install --no-cache-dir /build/depot && rm -rf /build
+
 COPY deploy/ deploy/
 CMD ["sleep", "infinity"]
 

@@ -1,7 +1,7 @@
 # Architecture decision records
 
-Every architectural decision this implementation is built on, in this repository. Thirty-three
-of them, and the code cites them by number throughout — in the shapes, the fixtures, the
+Every architectural decision this implementation is built on, in this repository. Forty of
+them, and the code cites them by number throughout — in the shapes, the fixtures, the
 checkpoint modules and the plan.
 
 ## ADR-001–027 — the architecture
@@ -60,6 +60,10 @@ decision interview of 13 September 2026, which closed every question blocking M2
 | [**034**](ADR-034-run-modes-and-the-station-decision-mode.md) | Run modes supply defaults; a station's decision mode narrows, never widens | **Accepted**, 13 September 2026 |
 | [**035**](ADR-035-standing-at-a-station.md) | Standing: who may act at a station, and on whose behalf | **Accepted**, 13 September 2026 |
 | [**036**](ADR-036-train-creator-train-owner-and-the-depot.md) | A train's three parties, and what a Depot may be asked to do | **Accepted**, 13 September 2026 |
+| [**037**](ADR-037-a-depot-is-a-station-for-trains.md) | A Depot is a station for trains; a creator is asked through their Gateway | **Accepted**, 13 September 2026 |
+| [**038**](ADR-038-both-parties-sign-the-agreement.md) | Both parties sign the agreement, and it records who signed for whom | **Accepted**, 13 September 2026 |
+| [**039**](ADR-039-delegated-standing-and-the-auditor.md) | A controller may delegate to a named party; the auditor reads and writes nothing | **Accepted**, 13 September 2026 |
+| [**040**](ADR-040-a-depot-pings-its-registry.md) | A Depot pings its registry; the registry announces nothing | **Accepted**, 13 September 2026 |
 
 ## The rule
 

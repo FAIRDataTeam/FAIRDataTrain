@@ -23,6 +23,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import rdflib
 from conftest import COMMONS
 
 ROOT = COMMONS.parent
@@ -75,6 +76,49 @@ def test_the_depot_profile_is_valid_depot_settings(monkeypatch) -> None:  # type
         monkeypatch.setenv(key, value)
     monkeypatch.setenv("FDT_COMMONS", str(COMMONS))
     assert DepotSettings.from_env().iri
+
+
+@pytest.mark.parametrize("name", ["station-ut", "station-oosterlicht"])
+def test_a_controller_can_state_a_condition_at_every_station_here(name: str, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    """S4 needs both: a credential that says which controller is acting, and somewhere to keep
+    what they write.
+
+    Without the second the station answers 501 to every change — honestly, but a testbed whose
+    condition builder is read-only demonstrates the read half of a screen whose whole point is
+    the write half. And the credential has to name the controller who actually owns data here,
+    or the surface authenticates somebody with nothing to say anything about.
+    """
+    from testbed import _environment
+
+    from fdt_station.core.config import StationSettings
+
+    for key, value in _environment(_named(name)).items():
+        monkeypatch.setenv(key, value)
+    settings = StationSettings()
+    assert settings.conditions_dir is not None, "this station would answer 501 to every change"
+    assert settings.conditions_dir.is_absolute()
+    assert str(settings.conditions_dir).startswith(str(ROOT / ".testbed"))
+
+    assert settings.controller_tokens, "no controller has standing to state a condition here"
+    controllers = {str(c) for c in settings.controller_tokens.values()}
+    held = {str(dataset.iri) for dataset in settings.datasets}
+    # The station's own reader, not another component's: `hasDataController` for the M1 dataset
+    # is in `m1-gene-disease.ttl`, which only the station's corpus loads. Asking a different
+    # component's graph would have answered "this controller owns nothing" about a station where
+    # they own the only dataset.
+    from fdt_station.core.contracts import Contracts as StationContracts
+
+    corpus = StationContracts(COMMONS).catalogue_corpus
+    fdt_o = rdflib.Namespace("https://w3id.org/fdt/fdt-o#")
+    owners = {
+        str(owner)
+        for dataset in held
+        for owner in corpus.objects(rdflib.URIRef(dataset), fdt_o.hasDataController)
+    }
+    assert controllers & owners, (
+        f"the credential names {controllers}, and the data here belongs to {owners}: this "
+        f"station would authenticate a controller with nothing to say anything about"
+    )
 
 
 def test_the_depot_in_this_testbed_can_be_withdrawn_from(monkeypatch) -> None:  # type: ignore[no-untyped-def]
@@ -326,3 +370,68 @@ def test_every_component_admits_the_console_this_testbed_ships_with() -> None:
     argv = _named("handler").argv
     passed = [argv[i + 1] for i, item in enumerate(argv) if item == "--allow-origin"]
     assert consoles in passed, "the Handler was told of no console; H3 and H4 would be blank"
+
+
+# ---------------------------------------------------------------- the testbed's creator identity
+
+
+def test_the_key_set_the_depot_reads_carries_no_private_material(tmp_path: Path) -> None:
+    """Only the public half is ever written, and that is structural rather than careful.
+
+    `write_key_set` builds the document from `public_jwk()`, which derives the public bytes and
+    never has the private ones in hand — so there is no path through it that could publish a `d`.
+    This asserts the property the structure is there to give, because the structure is one
+    refactor away from a function that takes the whole key and drops fields.
+    """
+    import creator
+
+    path = tmp_path / "creator-keys.json"
+    creator.write_key_set(path)
+    document = json.loads(path.read_text())
+
+    assert list(document) == [creator.CREATOR]
+    keys = document[creator.CREATOR]["keys"]
+    assert len(keys) == 1
+    assert keys[0]["kty"] == "OKP" and keys[0]["crv"] == "Ed25519"
+    for private in ("d", "p", "q", "dp", "dq", "qi", "k", "oth"):
+        assert private not in keys[0], f"the Depot's key set carries private material: {private}"
+
+
+def test_the_derived_key_verifies_what_the_derived_key_signed() -> None:
+    """The property that lets the compose have no volume.
+
+    The Depot holds the public half and the seed step signs with the private half, in two
+    containers that share no filesystem. They agree only because both derive from the same
+    constant — so if that derivation ever stops being deterministic, the symptom is every
+    publication refused as a signature that does not verify, with nothing on either side able to
+    say why. This is what would fail first instead.
+    """
+    import creator
+    from fdt_depot.signatures import CreatorKeys, DetachedSignature
+
+    digest = "sha256:" + "0" * 64
+    signature = creator._private_key().sign(digest.encode())
+
+    keys = CreatorKeys({creator.CREATOR: [creator.public_jwk()]})
+    keys.verify(
+        DetachedSignature(
+            signed_by=creator.CREATOR, key_id=creator.KEY_ID, algorithm="EdDSA",
+            signed_digest=digest, value=creator._b64u(signature),
+        ),
+        expected_digest=digest,
+        must_be=creator.CREATOR,
+        role="creator",
+    )
+
+
+def test_both_runners_mint_the_depots_key_set() -> None:
+    """`make up` and `make up-processes` are two paths and only one of them was exercised.
+
+    A Depot configured with a creator key set and unable to read it refuses to start — which is
+    the right behaviour and means a runner that minted on one path alone leaves the other failing
+    on a file the first one creates. Found by adding the container path and not the process one.
+    """
+    source = (DEPLOY / "testbed.py").read_text()
+    assert source.count("_mint_creator_keys(") >= 3, (
+        "one of the two runners no longer mints the Depot's key set before starting it"
+    )

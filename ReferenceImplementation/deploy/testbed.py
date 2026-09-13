@@ -288,9 +288,15 @@ def up(logs: Path, *, run_plan: bool, timeout: float) -> int:
 
         component.log = logs / f"{component.name}.log"
         handle = component.log.open("wb")
+        # Both start paths mint, because there are two of them and only one is exercised by
+        # `make up`. A Depot configured with a creator key set and unable to read it refuses to
+        # start, by design — so a runner that minted in the container path alone would leave
+        # `make up-processes` failing on a file the other path creates.
+        environment = _environment(component)
+        _mint_creator_keys(environment)
         component.process = subprocess.Popen(  # noqa: S603 — our own argv, no shell
             [str(python), *component.argv],
-            cwd=str(ROOT), env=_environment(component), stdout=handle, stderr=handle,
+            cwd=str(ROOT), env=environment, stdout=handle, stderr=handle,
         )
         started.append(component)
         if _healthy(component, timeout=timeout):
@@ -376,6 +382,9 @@ def _after_start(component: Component) -> None:
     if component.name == "station-oosterlicht":
         _seed_an_approval(component)
         return
+    if component.name == "depot":
+        _publish_a_train(component)
+        return
     if component.name != "registry":
         return
     try:
@@ -394,6 +403,24 @@ def _after_start(component: Component) -> None:
             # make the testbed less honest than the thing it is running.
             print(f"        UNREACHED {report['kind']:<8} {report['url']} — "
                   f"{report.get('error')}", file=sys.stderr)
+
+
+def _publish_a_train(depot: Component) -> None:
+    """One train published by its creator, so the Depot's write surface is on the testbed.
+
+    WP-5.5's acceptance criterion asks for *a train published to the Depot and found through the
+    registry by its data requirement*, and until this ran there was no published train to find:
+    every train the Depot served came from the corpus it was deployed with, which demonstrates
+    resolving a train and not publishing one (ADR-036).
+
+    The Depot ordering matters and is not incidental — `components()` yields the Depot before the
+    registry, so the train is in the Depot before the registry's first harvest and the index opens
+    with it in. A registry that had to be harvested twice to show it would teach that publishing is
+    slow, which is a fact about this runner rather than about the ecosystem.
+    """
+    import creator                                       # deploy/, on the path beside this file
+
+    print(f"        {creator.publish(depot.url, COMMONS)}")
 
 
 def _print_urls(*, run_plan: bool, consoles: str | None = None) -> None:
@@ -445,9 +472,34 @@ def exec_component(name: str, host: str) -> int:
     stop signal reaches uvicorn instead of a wrapper that would have to forward it.
     """
     component = _named(name, host=host)
-    for key, value in _environment(component).items():
+    environment = _environment(component)
+    for key, value in environment.items():
         os.environ[key] = value
+    _mint_creator_keys(environment)
     os.execv(sys.executable, [sys.executable, *component.argv])  # noqa: S606 — our own argv
+
+
+def _mint_creator_keys(environment: dict[str, str]) -> None:
+    """Write the Depot's creator key set, if it was configured with one and has none.
+
+    It has to exist *before* the Depot starts: `CreatorKeys.load` runs at application start-up and
+    a Depot told where its keys are and unable to read them refuses to start — deliberately,
+    because starting anyway would refuse every creator's signature as an unknown key and send
+    whoever is publishing off to check their own key material.
+
+    `deploy/creator.py` derives it, so the container that holds the public half and the container
+    that signs with the private half agree without sharing a filesystem. The compose has no
+    volumes on purpose, and this is what it costs to keep it that way.
+    """
+    configured = environment.get("FDT_DEPOT_CREATOR_KEYS")
+    if not configured:
+        return
+    path = Path(configured)
+    if path.is_file():
+        return
+    import creator                                       # deploy/, on the path beside this file
+
+    creator.write_key_set(path)
 
 
 def health(name: str, timeout: float) -> int:

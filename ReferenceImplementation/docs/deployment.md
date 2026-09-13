@@ -102,6 +102,47 @@ In production, a station with no admin token accepts no writes at all and says s
 reason rather than offering a control whose every use returns 401. This is a placeholder until
 WP-2.4 gives the operator, the controller and the auditor a real identity model — see **Q21**.
 
+## The controller's credentials, and where their conditions live
+
+`FDT_STATION_CONTROLLER_TOKENS` — a JSON object mapping a bearer token to the **data controller**
+it proves. Three parties ask three different things of a station and each has its own credential
+(ADR-011): a visit's token says who is visiting on behalf of which consumer, the admin token says
+who may configure the station, and this says whose data somebody speaks for. A station with none
+configured serves no controller surface at all, which is honest rather than broken: it means
+nobody has been given standing to act as a controller here.
+
+`FDT_STATION_CONDITIONS_DIR` — where a controller's own access conditions are kept. A condition is
+an `odrl:Offer` the station publishes and evaluates against (ADR-007, ADR-017), and until
+`fdt-commons` finding 73 the only way to change one was to edit the deployment's metadata as the
+station's **operator** — so the party ADR-011 exists to separate from the operator had to become
+one.
+
+Without the directory the station publishes the conditions it was deployed with and answers `501`
+to a change, saying so. That is deliberate and it is not a permission problem: a condition written
+into memory is a governance decision the controller was told had taken effect, and that the next
+restart undoes — their terms would silently widen back, which is the direction nobody checks.
+
+**A controller's conditions may not contradict each other** (Q26,
+`fdt-commons/protocol/condition-consistency.md`). Several conditions over one dataset in one
+network are fine and are evaluated as the **union** — two offers are two things on offer, and a
+standing research permission beside a narrower arrangement with one named collaboration is an
+ordinary thing to want. What the station refuses is a pair that cannot both hold: the negotiator
+tries each offer until one does not refuse, so a prohibition standing beside a permission it
+covers does nothing at all, and that is how a controller narrows their terms and narrows nothing.
+The station answers `409`, names the condition and the rule pair, and changes nothing.
+
+The check is deliberately conservative. Only `odrl:eq` on a shared left operand proves two rules
+apart, and `odrl:includedIn` is followed transitively and **upward only** — prohibiting
+`odrl:use` reaches a permission on `fdt-p:runQuery`, and prohibiting `runQuery` beside a
+permission on `use` is a narrowing, which is quite possibly what was meant. Anything the station
+cannot prove apart comes back to the controller to be made explicit: a false contradiction costs
+one edit, and a missed one is an access rule that silently does not apply.
+
+Conditions that arrive in the **metadata a station was deployed with** are reported rather than
+refused, and are kept as given. Choosing between them would be the silent resolution this rule
+exists to prevent, taken by the party least entitled to take it, and refusing to start would turn
+one controller's metadata defect into an outage for every other controller at the station.
+
 ## Bringing the testbed up
 
 ```sh
@@ -139,6 +180,8 @@ read and was not is exactly as broken as configuration that is wrong.
 | `FDT_STATION_RUN_MODE` | `production` | `development` or `production` (above) |
 | `FDT_STATION_DECISION_MODE` | the run mode's | `automated`, `semi-automated`, `manual` (above) |
 | `FDT_STATION_ADMIN_TOKEN` | none | the operator's credential for the admin API |
+| `FDT_STATION_CONTROLLER_TOKENS` | none | JSON object, token → data controller IRI. None means no controller surface is served |
+| `FDT_STATION_CONDITIONS_DIR` | none | where a controller's access conditions are kept. None means the station publishes what it was deployed with and answers 501 to a change |
 | `FDT_STATION_IRI` | the profile's | the IRI the station is known by |
 | `FDT_STATION_BASE_URL` | the profile's | public base URL; the dispatch endpoint **is** this and nothing appended, so a path prefix goes here |
 | `FDT_STATION_ADAPTERS` | the profile's | JSON list; the enabled adapters are the *only* mechanisms the station advertises |

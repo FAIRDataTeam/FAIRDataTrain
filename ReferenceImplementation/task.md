@@ -8,13 +8,13 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** **station S4 and S5, then H2's dispatch step.** The Depot's write surface is done (WP-5.2b): `fdt-depot` 0.2.0 publishes, is taken from and is withdrawn from, against `fdt-commons` **v0.29.0** — which gained `protocol/train-publication.md` and two findings the implementation turned up (**71**, "signed over both" was never a definition; **72**, a Depot had no way to say it accepts no publications). `tests/e2e/test_one_rule_two_evaluators.py` holds the Depot's licence evaluation and the station's `OdrlNegotiator` to one another, which is what ADR-036 means by *whatever a station concludes about a clause, a Depot must conclude about the same clause*. Q21 was answered on 13 September 2026 (ADR-035, ADR-036) and no longer blocks anything. **M5's browser acceptance** is one command away: `make up` brings the whole ecosystem up in Docker, consoles included, and its Depot can now be withdrawn from and watched. Eleven screens exist: station S1, S2, S3, S6, S7, S8 and the public page S9; Handler H1, H2, H3 and H4; plus the Depot and registry read consoles. What is left all acts *as a controller* — station S4 and S5, and H2's dispatch step — and WP-5.5's Depot console now has a write surface to drive. WP-5.0 through WP-5.4 are done: FDT-O is at 4.0.0, a train declares the data it needs, a Depot is the authority for it, a registry answers which stations hold it and names the property the others were missing, and two stations in two networks show the difference between a decision a machine may take and one it may not. The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always.
+**Next:** **station S5, then H2's dispatch step.** The Depot's write surface is done (WP-5.2b): `fdt-depot` 0.2.0 publishes, is taken from and is withdrawn from, against `fdt-commons` **v0.29.0** — which gained `protocol/train-publication.md` and two findings the implementation turned up (**71**, "signed over both" was never a definition; **72**, a Depot had no way to say it accepts no publications). `tests/e2e/test_one_rule_two_evaluators.py` holds the Depot's licence evaluation and the station's `OdrlNegotiator` to one another, which is what ADR-036 means by *whatever a station concludes about a clause, a Depot must conclude about the same clause*. Q21 was answered on 13 September 2026 (ADR-035, ADR-036) and no longer blocks anything. **M5's browser acceptance** is one command away: `make up` brings the whole ecosystem up in Docker, consoles included, and its Depot can now be withdrawn from and watched. Eleven screens exist: station S1, S2, S3, S6, S7, S8 and the public page S9; Handler H1, H2, H3 and H4; plus the Depot and registry read consoles. S4, the access-condition builder, is built (WP-5.5a) — with it a controller states their own terms at a station for the first time, which is what `fdt-commons` finding 73 recorded as missing. What is left is S5 and H2's dispatch step. WP-5.0 through WP-5.4 are done: FDT-O is at 4.0.0, a train declares the data it needs, a Depot is the authority for it, a registry answers which stations hold it and names the property the others were missing, and two stations in two networks show the difference between a decision a machine may take and one it may not. The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always.
 
 | | | |
 |---|---|---|
 | **M0** Foundations | ✅ done | 12 Sep 2026 |
 | **M1** One visit | ✅ done | 12 Sep 2026 |
-| **M5** Testbed (new — ADR-029) | 🟨 in progress — WP-5.0–5.4 and 5.2b done; WP-5.5 at 11 of 13 screens. The Depot publishes, is taken from and is withdrawn from (ADR-036); S4, S5 and H2's dispatch remain | |
+| **M5** Testbed (new — ADR-029) | 🟨 in progress — **its acceptance criterion is met** (`make up && make acceptance`, 13 Sep 2026: 15/15 screens carrying live data in a real browser, no browser-level noise, and a train published to the Depot and found through the registry by its data requirement). WP-5.0–5.4, 5.2b and 5.5a done; WP-5.5 at 12 of 13 screens — **S5 and H2's dispatch step are what is left**, and S5 now waits on WP-2.9 | |
 | **M2** Fan-out and governance | 🟨 in progress — WP-2.4's controller API done | |
 | **M3** Multi-hop | ⬜ not started | |
 | **M4** Hardening and alignment | ⬜ not started | |
@@ -349,6 +349,58 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       name the right one. **Q19** records the reading taken for a network that states no regime:
       silence bars automated decisions, because the two errors are not symmetric.
       13 mutations, 0 survivors, against a green control. `make e2e` 15 passed.
+- [x] **WP-5.5a — Station S4, the access-condition builder** · 5.5 · L — **done 13 Sep 2026.**
+      `fdt-commons` 0.30.0, `controller-api.yaml` 0.2.0-draft.1, the station at 327 tests, the
+      console at 50.
+      **Finding 73.** ADR-011 separates three parties and only two of them could act: a data
+      controller could *decide* a request — which is the exception path, what is left over when a
+      condition could not settle one by itself — and could not *state a condition*. Their terms
+      were a file in the deployment's metadata, so changing them meant editing that file as the
+      station's operator. The party ADR-011 exists to separate from the operator had to become
+      one.
+      **One source of offers, which is the design decision the whole work package turns on.**
+      `build_catalogue` read `contracts.catalogue_corpus` and the evaluator read its own graph of
+      the same files. Two readers of an immutable corpus is harmless; two readers the moment
+      either can be written to is a station that advertises terms nobody is judged against, with
+      neither copy looking wrong. Both now read `policy/conditions.py`, and a mutation that gives
+      either one its own copy back is caught.
+      **Corpus offers are conditions**, seeded and editable, so a controller's first sight of the
+      surface is their own rules rather than an empty list beside a catalogue that plainly has
+      terms in it. `Draft.of` reads an offer into the form a console edits and `Draft.offer`
+      writes it back, and **every offer in the corpus must survive that round trip
+      isomorphically**. That test found two defects on its first run: a k-anonymity threshold
+      `"10"^^xsd:integer` came back as `<10>` — a well-formed constraint that matches nothing and
+      reads, in every rendering, exactly like the rule the controller wrote — and an explicit
+      `requiresManualApproval false` was dropped, which is a different statement from having said
+      nothing. Both are in the contract now: a right operand is an IRI **or** a literal with its
+      datatype, and the flag has three states.
+      **Q26** — one condition per resource per network. The negotiator tries each offer until one
+      does not refuse, so two mean the union decides and a controller who narrows one of them has
+      narrowed nothing; it fails open at exactly the moment somebody is restricting access.
+      **A change says why** (ADR-027), kept verbatim with the digest of the offer as it then
+      stood, so an agreement that pinned `fdt-p:offerDigest` in March can be matched to the terms
+      that were in force in March. A station with nowhere to keep one answers 501 and says so.
+      **The preview is the sentence a consumer reads.** `rdf/condition.ts` maps a draft onto the
+      `Offer` shape `rdf/policy.ts` already renders, so there is one controlled sentence and not
+      two — and the cross-language pair
+      (`examples/protocol/condition-draft.json` + `examples/condition-published.ttl`) holds the
+      station's writer and the console's renderer to each other. Its first run caught the drift
+      it exists for, in the adapter written ten minutes earlier: the preview said "where purpose
+      eq Research And Development" where the published offer says "for Research And Development".
+      25 mutations against a control verified green in both environments, and **four survived**,
+      which is the result worth recording rather than the number. One of them was the assertion
+      this work package exists for: giving the **negotiator** its own copy of the corpus back
+      changed no test, because the test that watched for it asked `Conditions.offers_for` what it
+      held — the class agreeing with itself — while nothing asked the party that actually decides
+      a request. A controller could have narrowed their terms, watched the console confirm it and
+      the catalogue advertise it, and had every visit still granted under the terms they withdrew.
+      The other three: a condition could be brought into force with no reason at all (`POST` was
+      uncovered where `PUT` was covered, so ADR-027 held for every change except the first one);
+      a read-only station reported the body's fault before its own, sending a controller round a
+      loop that cannot terminate; and the console's preview could read the literal `10` as the IRI
+      `<10>` without changing a single rendered word, because spelling that IRI's last segment
+      gives `10` back. All four are closed — by four tests written against the mutants, which is
+      the only way to know they are closed — and the re-run is clean.
 - [ ] **WP-5.5 — Consoles for the testbed** · 2.7, 5.2, 5.3 · L
       Each component's UI has its own job; they are not one observability layer.
       **Depot:** publish and withdraw trains — upload a payload, declare parameters, the input
@@ -381,9 +433,10 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       That found **finding 64 / Q22**: 49 FDT-O terms carry no `rdfs:label`, among them every
       interaction mechanism a station publishes.
 
-      **Still to build: the Depot's publish/withdraw surface**, station **S4** (the condition
-      builder) and **S5** (agreement detail). All three write or read a controller's own policy
-      *as that controller*, and the console has no controller identity to do it as — **Q21**.
+      **Still to build: station S5** (agreement detail), which reads a controller's own
+      agreements and needs an agreement endpoint on the controller surface that does not exist
+      yet — S4 built the first half of that surface. The Depot's publish/withdraw surface is
+      WP-5.2b and S4 is WP-5.5a, both done.
       H2 stops on the same line for the same reason: it composes a `fdt-run:Plan` and hands it
       over, because starting a run means dispatching a train on somebody's behalf and nothing
       yet says who may do that for whom. The Handler's own CLI already declines to grow a "run
@@ -414,17 +467,60 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       namespace*, so all five reported up and nothing on the host could reach any of them. A
       container can always talk to itself. `tests/e2e/test_compose.py` now asks from outside.
 
-      **The acceptance run itself has not been done in a browser**, and its second half — a
-      train published to the Depot and found through the registry — still needs the Depot
-      writes. Its first half is covered from both ends by `tests/e2e/test_consoles.py`, which
-      caught a bug shipped in the registry console the session before (finding 66), and the
-      testbed's own configuration by `tests/e2e/test_testbed.py` and `test_compose.py`.)*
+      **The acceptance run has now been done in a browser — `make acceptance`, 13 Sep 2026 —
+      and both halves pass.** `FDTConsole/tools/acceptance.mjs` drives headless Chromium against
+      the running testbed: fifteen screens, each asserted on content only the live M1 run can put
+      there, plus every `console.error`, every failed request and every uncaught throw. **15/15
+      carried live data, with no browser-level noise.** H3 shows the itinerary, the five
+      checkpoint ticks, the completeness statement in ADR-026's own words and each event's
+      justification verbatim; S3 at Oosterlicht shows ADR-032 working — every condition satisfied,
+      the station recommending *grant*, labelled **a recommendation, not a decision**, asking under
+      what authority the person is deciding.
+
+      The second half needed building before it could be run. WP-5.2b gave the Depot a write
+      surface and nothing had ever configured the testbed to use it — `FDT_DEPOT_CREATOR_KEYS` was
+      commented out, so every submission was refused as an unknown key and every train the Depot
+      served came from the corpus it was deployed with, which demonstrates *resolving* a train and
+      not *publishing* one. `deploy/creator.py` gives the testbed a creator identity, **derived
+      rather than stored** so the container holding the public half and the container that signs
+      with the private half agree without the compose gaining a volume it deliberately does not
+      have. The testbed now publishes `variant-burden` signed by its creator, the registry harvests
+      three trains instead of two, and `POST /search` resolves that train's own
+      `fdt-o:InputRequirement` to the stations that hold matching data. That derivation is a
+      testbed trick and is marked as one: a signing key derived from a constant in a repository is
+      a key everybody has.
+
+      **Two defects, both invisible to every existing test, both found by looking.**
+
+      *A read that failed is not a component that is empty.* Seven screens answered a failed read
+      by setting the collection to `[]`, so each one's own "nothing here" prose then made a
+      positive claim about a component it had not read: S2 said **"This station did not answer"**
+      and **"No jobs. Nothing has been sent to this station yet."** in the same view, and the
+      second was false. In a governance console that is the difference between reassurance and a
+      missing audit trail, and it is the direction nobody checks — an operator hunting a visit is
+      told there was never one. Fixed in S2, S7, S3 and H3;
+      `__tests__/EmptyIsNotUnreachable.test.tsx` holds all three station screens against both
+      failures, and was verified to fail with the defect restored. It could not have been found
+      under jsdom, where every fetch is whatever the test hands it: nobody had watched one fail.
+
+      *Prose about what does not exist outlives the thing it described.* The Depot console's
+      footer read **"The Depot API is read-only by design… a write surface needs an answer to who
+      may publish a train here, which is the identity model WP-2.4 owes (Q21)"** — printed
+      directly beneath a train published through that surface, after Q21 was answered and ADR-036
+      accepted. The acceptance run now asserts that page never claims it again.
+
+      Its first half is also covered from both ends by `tests/e2e/test_consoles.py`, which caught a
+      bug shipped in the registry console the session before (finding 66), and the testbed's own
+      configuration by `tests/e2e/test_testbed.py` and `test_compose.py`.)*
       **Handler client:** connect to `FDTRegistry` instances, select and parametrise trains,
       choose an itinerary strategy, watch the run.
       The **Individual Gateway is not in M5** — it lands in M2 with the controller workflow it
       needs (WP-2.4). *Acceptance: the M1 scenario watched end to end in a browser — the
       itinerary, the checkpoints, the justifications, the envelope — and a train published to the
-      Depot and found through the registry by its data requirement.*
+      Depot and found through the registry by its data requirement.* **Met, 13 September 2026** —
+    `make up && make acceptance`, 15/15 screens, no browser-level noise, and a train published and
+    found. Repeatable rather than witnessed once: running it a second time is one command, which
+    is the whole reason it was written down instead of described.
 
 Nothing in M5 is blocked on a decision. Q16 is answered by **ADR-030**, which replaced
 `fdt-run:targetQuery` rather than giving it a grammar: a train declares the data it needs and
@@ -492,6 +588,102 @@ statement.
       listed explicitly as owed to the milestone that produces them — deferred, not dropped. Fix
       the mock-up copy that writes "rejected at matching" for what ADR-026 calls Refused (sweep
       K), and add the label ADR-032 needs for an adverse recommendation awaiting a human.
+
+### From the second decision interview, 13 September 2026
+
+Eight answers, four of which are architecture and are drafted as **ADR-037** to **ADR-040**. The
+two that change code already written are done in place (Q26 below, and Q23's second CORS
+setting); the rest are work packages here, because each one is a contract change followed by a
+surface, and doing any of them by editing code first is the thing this project does not do.
+
+- [ ] **WP-2.8 — A Depot asks the creator, through their Gateway (ADR-037)** · 2.4, 5.2b · L
+      A Train Depot is a station whose assets are trains, so a creator's licence that requires a
+      person is answered the way a station answers one: the case is parked and the **Train
+      Creator is asked through their Individual Gateway**, exactly as a natural person who
+      controls data receives a request to consent (ADR-018). `POST /trains/{train}/take` gains a
+      fourth answer — *pending*, which is neither granted nor Refused and is the state ADR-032
+      requires and the contract could not express. This reverses Q25's interim 403, and the
+      reason it was wrong is worth keeping: the default reasoned that a Depot has nobody to ask,
+      when being elsewhere is the normal condition of the party who decides. Depends on the
+      Gateway (WP-2.4), which is the piece that does not exist yet.
+- [ ] **WP-2.9 — Both parties sign the agreement (ADR-038)** · 1.3 · M
+      ADR-028 gave the agreement the assignee's signature and left the assigner's side unsigned —
+      the side where the custody problem lives, because the station writes the agreement, keeps
+      the record, and is the party the controller is trusting. `fdt-p:countersignature`
+      generalises to `fdt-p:signature` with a role and an on-behalf-of, `AgreementShape` requires
+      both sides, and `tools/derivation.py` checks them: a shape requiring "at least one
+      signature" passes every unilateral agreement. The station needs a signing key and a
+      published JWKS. **The distinction to protect** is that *the controller signed* and *the
+      station signed for the controller* are different facts — a controller holding their own key
+      is the end state, an agent's signature is the bridge, and an agreement that let them be
+      confused would be worth less than no signature at all. Every published agreement fixture is
+      regenerated; the one-sided agreement becomes the counter-example, which is what all of them
+      look like today.
+- [ ] **WP-2.10 — Delegated standing, and the auditor's read surface (ADR-039)** · 2.4 · L
+      A controller may delegate to a **named person or body** — a data access committee, a
+      `[METC ref.]` — who inherits their standing and cannot exceed it, may supply evidence and
+      may not countermand a prohibition (Q13.4), and is **recorded on every decision**. That is
+      the field Q13 decision 3 asked for and nothing could fill: a station in which the committee
+      is indistinguishable from the controller cannot record what happened. Delegation to the
+      Individual Gateway is *not* decided — making a controller's standing transferable to
+      software is its own question. Separately, the **auditor becomes a party**: read-only by
+      construction rather than by convention, scoped by credential to a station or to one
+      controller's data, and **their reads are events**, because a trail that records every
+      decision and not who read it has a hole where a misuse would go.
+- [ ] **WP-2.11 — A Depot pings its registry (ADR-040)** · 5.2b, 5.3 · S
+      The FDP pattern: when a Depot's content changes — a publication, a withdrawal, a
+      description that has moved on — it pings the registry, which re-harvests. The registry
+      announces nothing to anybody. **A ping carries what changed, not who cares**, which is why
+      this is not what ADR-036 refused: no list of interested parties exists anywhere, so there
+      is none to keep or leak. The ping is a hint and never a fact — the registry fetches and
+      believes the Depot, because an index is not a trust anchor (ADR-029) — and it is
+      best-effort, because a Depot whose registry is unreachable has still withdrawn the train.
+- [ ] **WP-2.12 — Forty-eight FDT-O labels (Q22)** · 5.0 · S
+      Drafted onto the `fdt-o-v2` branch so PR #1 is reviewed once (Q5). Forty-five are
+      transcription; `fdt-o:hasControllingRights`, `fdt-o:isPayloadOf` and
+      `fdt-o:generatesOutput` are definitions and go to Luiz marked as such. The distinction is
+      the reason this was a question rather than a chore: a label guessed from an IRI gets cited
+      afterwards as though it were normative, and `fdt-o:TrainProvider` is the proof — its IRI
+      says the wrong word, so no transcription could have produced "Train Creator".
+- [x] **WP-2.13 — A note at the top of each prototype's README (Q7)** · — · XS — **drafted
+      13 Sep 2026**, in `docs/prototype-notes/`. One file per repository, each the block to paste
+      at the top of that README. **Pushing them is an act on the `FAIRDataTeam` organisation and
+      is Luiz's**, which is the only reason this is not closed.
+
+      **Five, not four.** `TrainHandler` is an umbrella holding `TrainHandler-server` and
+      `TrainHandler-client` as submodules with no code of its own, and a newcomer arriving there
+      needs the note as much as the others do.
+
+      The notes **state facts and name the successor** — no *deprecated*, no *unsupported*, no *do
+      not use*, because those are judgements about other people's running code and nothing here has
+      replaced any of it in production. They name the successor **without linking to it**: the
+      successors are private under Q6, and a link that 404s tells a reader the project is broken
+      rather than that the repository is not yet public. Each links to the public `FAIRDataTrain`
+      instead. When Q6 flips, the names become links, and that is the one edit they will need.
+
+      Writing them found a defect in the record. Every date and language was read from the
+      repositories rather than remembered, and **D1's description of the lineage was wrong**: it
+      called all four Train Handler repositories "the Java 17 / Spring Boot prototypes" when only
+      `TrainHandler-server` is — `TrainHandler-client` is Vue, `TrainOrchestrator` is Python, and
+      `TrainHandler` holds no code. Corrected in `OPEN-QUESTIONS.md`. It was one paste away from
+      four public READMEs, which is the argument for drafting these somewhere reviewable.
+
+- [x] **WP-2.14 — The `w3id.org` redirect mapping (Q1)** · — · XS — **drafted 13 Sep 2026**, in
+      `docs/w3id-redirects.md`; nothing opened. Q1 turned out to be **two** decisions that lift at
+      different times, which the single entry had been hiding: `fdt-o#` and `fdt-o` are served from
+      **`FDT-O`, which is already public**, so they are not blocked on Q6 at all — they are blocked
+      on **Q5**, because FDT-O's `master` still carries the pre-D2 ontology and a redirect to it
+      would *resolve*, which is worse than not resolving. Only `run/context.jsonld` and `schemas/*`
+      wait on Q6. The draft also records the two things the rewrite has to get right and would
+      plausibly get wrong: it must point at a **tag** rather than a branch, because an ontology IRI
+      is cited by documents that outlive it; and `raw.githubusercontent.com` serves `.ttl` as
+      `text/plain`, so an IRI that "resolves" can still hand a reasoner something it cannot parse.
+
+**Not work packages, because they are decisions to hold rather than build:** the repositories
+stay private (Q6), so two of the four `w3id.org` redirects wait on them (Q1) and WP-4.4's
+acceptance is unrunnable by a third party for a reason that is a decision and not a defect; a
+registry tells nobody (ADR-040); and an owner may not publish a parametrised instance of a train
+type in v1 — parameters travel with the visit, where `fdt-run:Parameter` already carries them.
 
 ---
 
