@@ -77,6 +77,29 @@ def test_the_depot_profile_is_valid_depot_settings(monkeypatch) -> None:  # type
     assert DepotSettings.from_env().iri
 
 
+def test_the_depot_in_this_testbed_can_be_withdrawn_from(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    """A store, an operator and a credential, or the testbed's Depot answers 501 to everything.
+
+    Withdrawal is the write operation this testbed can actually show — publishing needs a
+    creator's key set, which is deliberately not configured (a Depot resolves creator keys out
+    of band and never from the submission, ADR-036). All three of these are needed together: a
+    credential with no operator IRI beside it produces a withdrawal by nobody, which is the
+    counter-example `invalid/train-withdrawn-by-nobody.ttl` exists to refuse.
+    """
+    from testbed import _environment
+
+    from fdt_depot.core.config import DepotSettings
+
+    for key, value in _environment(_named("depot")).items():
+        monkeypatch.setenv(key, value)
+    settings = DepotSettings.from_env()
+    assert settings.store_dir is not None, "this Depot would answer 501 to every write"
+    assert settings.admin_token and settings.operator
+    # resolved to somewhere writable, not left as the repo-relative form the profile carries
+    assert settings.store_dir.is_absolute()
+    assert str(settings.store_dir).startswith(str(ROOT / ".testbed"))
+
+
 # ------------------------------------------------------- and they agree with each other
 
 

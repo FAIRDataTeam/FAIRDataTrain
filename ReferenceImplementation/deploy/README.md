@@ -16,7 +16,7 @@ thing you need installed.
 |---|---|---|
 | **station-ut** | 8400 | the station the M1 scenario visits. Its network permits automated decisions and the operator has chosen `automated`, so a request whose every condition is met is granted without anybody being asked |
 | **station-oosterlicht** | 8401 | in two networks that **differ on whether a machine may decide**. In the regional stroke network Oost it concludes nothing in either direction (ADR-032) — not even a refusal — and puts the case to a person |
-| **depot** | 8402 | the authority for a train (ADR-029): the concrete class, the parameters, the input requirement, and the payload digest a station checks at PEP 1 |
+| **depot** | 8402 | the authority for a train (ADR-029): the concrete class, the parameters, the input requirement, and the payload digest a station checks at PEP 1. It can also be **taken from** and **withdrawn from** (ADR-036) — see below |
 | **registry** | 8403 | an index of what the others publish, harvested once at start-up. Explicitly **not** a trust anchor |
 | **handler** | 8404 | drives `plan-gene-disease-single.jsonld` against the UT station on startup, so there is a finished run to watch |
 | **consoles** | 8405 | all six bundles, built and served as files |
@@ -131,6 +131,39 @@ a station that behaved differently under the testbed than under its own settings
 demonstrating the testbed rather than the station. `tests/e2e/test_testbed.py` loads every
 profile through `StationSettings`, `RegistrySettings` and `DepotSettings`, so a renamed field
 fails in `make e2e` rather than in front of somebody who has just run `make up`.
+
+### The Depot's write surface, in this testbed
+
+A Depot with no store publishes a curated corpus and accepts neither a publication nor a
+withdrawal; it answers `501` and says so. This one has a store, an operator IRI and a
+credential, so two of the three operations can be watched:
+
+```sh
+# take the gene-disease train under its creator's licence — this changes nothing the Depot serves
+curl -X POST http://localhost:8402/trains/gene-disease/take \
+     -H 'Content-Type: application/json' \
+     -d "{\"request\": $(python3 -c 'import json,sys;print(json.dumps(open(sys.argv[1]).read()))' \
+          fdt-commons/examples/train-taken.ttl)}"
+
+# withdraw one as the agent operating this Depot — which says nothing about the code
+curl -X POST http://localhost:8402/trains/time-to-groin/withdraw \
+     -H 'Authorization: Bearer fdt-testbed-depot-operator' \
+     -H 'Content-Type: application/json' \
+     -d '{"reason": "Carried no longer, on this Depot operator'"'"'s instruction."}'
+
+# and it is still here: 200, with the withdrawal on it, and nobody new may take it
+curl http://localhost:8402/trains/time-to-groin | grep wasInvalidatedBy
+```
+
+**Publishing is deliberately not configured.** A Depot resolves a creator's keys from its own
+configuration and never from the submission — a key fetched from wherever the submitter pointed
+would prove only that they hold the key they nominated — so without `FDT_DEPOT_CREATOR_KEYS`
+this Depot has been told about nobody and refuses every signature as an unknown key. The profile
+says where to point it.
+
+The store is `.testbed/depot-store`, which resolves to the checkout on a developer's machine and
+to a directory inside the container under `make up`. Compose declares no volume for it, so
+`make down && make up` is still a clean testbed.
 
 Under Docker the profiles are also read a second time, by compose's own `.env` parser, which has
 both of the conveniences listed above. The two agree today;

@@ -792,3 +792,42 @@ withdrawn train should tell anybody — the Handler that resolved it last week, 
 ran it. ADR-036 decided the *Depot* notifies nobody, and gave the reason: a notification list is a
 record of who is doing what with whose train, held by a party with no business knowing. The same
 argument applies to a registry, which is why the default is silence there too.
+
+### Q25 — A creator's licence that asks for a person, and a Depot that has none — **DEFAULT TAKEN 13 Sep 2026**
+**Blocks:** nothing today; no fixture offer over a train sets `fdt-p:requiresManualApproval`. It
+becomes real the first time a creator publishes one that does. Marked `Q25` in
+`TrainDepot/src/fdt_depot/licence.py`.
+
+`fdts:OfferShape` admits `fdt-p:requiresManualApproval` on any offer, including a creator's offer
+over a train. A station meeting that flag parks the case and shows it to the data controller, who
+is a real party with a console and a reason to be there (ADR-008, ADR-032). **A Depot has nobody
+to ask.** The creator is somewhere else entirely; the Depot's operator is the wrong party by
+construction — they hold the bytes and are answerable for nothing about the code (ADR-036).
+
+ADR-032's rule makes this sharp rather than merely awkward: *where a machine may not grant, it
+may not refuse either*. So a Depot facing this flag may not conclude the agreement **and** may not
+say the licence refused, because the creator has not refused anything. The contract
+(`train-depot-api.yaml`) gives `POST /take` three answers — 201, 403 and 409 — and none of them
+is "nobody has decided".
+
+Three readings:
+
+1. **A Depot parks it**, exposes the case, and the creator collects it from somewhere. This makes
+   a Depot hold a queue of who wants to use whose train, which is a record of commercial interest
+   held by a party with no business in it — the same argument that made ADR-036 decide a Depot
+   notifies nobody about a withdrawal.
+2. **`202 Accepted`, and the asker approaches the creator out of band.** Honest about what
+   happened; needs a fourth response and a state the Depot has to keep.
+3. **The Depot answers 403 and says in words that nothing has been refused** — that this licence
+   is not one a Depot can conclude and the asker should go to the creator.
+
+**Default taken: (3),** with the title and detail carrying the distinction verbatim: the body says
+*"This licence is not one a Depot can conclude"*, names `fdt-p:requiresManualApproval` as the
+clause, and does not use the word Refused, which is a party's decision and belongs to nobody here
+(ADR-026). It is the least-wrong answer available inside the contract as it stands, and it keeps
+the Depot free of a queue nobody asked it to keep.
+
+**What it does not answer:** whether a creator's offer should be allowed to carry the flag at all.
+A licence over code that requires a person to conclude may simply be a licence that is not
+published through a Depot — "email me" is a legitimate way to license software, and modelling it
+as an offer nobody can act on may be the actual mistake.

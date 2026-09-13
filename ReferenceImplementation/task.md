@@ -8,13 +8,13 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** **implement the Depot's write surface** (`TrainDepot`), then station S4/S5 and H2's dispatch. The contracts for it are done: **v0.28.0** carries `POST /trains`, `POST /trains/{train}/take` and `POST /trains/{train}/withdraw`, with the shapes, six new fixtures and three counter-examples behind them; FDT-O has `fdt-o:TrainProvider` labelled *Train Creator*. Q21 was answered on 13 September 2026 (ADR-035, ADR-036). What was `fdt-commons` (the Depot's write surface in `train-depot-api.yaml`, shapes for the creator's offer and the creator–owner agreement) and FDT-O's `fdt-o:TrainCreator` on the Q5 branch. **M5's browser acceptance** is also now one command away: `make up` brings the whole ecosystem up in Docker, consoles included. Eleven screens now exist: station S1, S2, S3, S6, S7, S8 and the public page S9; Handler H1, H2, H3 and H4; plus the Depot and registry read consoles. What is left all writes or reads a controller's own policy *as that controller* — the Depot's writes, station S4 and S5, and H2's dispatch step — and the console has no controller identity to do it as: **Q21 now blocks four things**, and is the one decision standing between here and M5 closing. WP-5.0 through WP-5.4 are done — FDT-O is at 4.0.0, a train declares the data it needs, a Depot is the authority for it, a registry answers which stations hold it and names the property the others were missing, and two stations in two networks now show the difference between a decision a machine may take and one it may not. The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always.
+**Next:** **station S4 and S5, then H2's dispatch step.** The Depot's write surface is done (WP-5.2b): `fdt-depot` 0.2.0 publishes, is taken from and is withdrawn from, against `fdt-commons` **v0.29.0** — which gained `protocol/train-publication.md` and two findings the implementation turned up (**71**, "signed over both" was never a definition; **72**, a Depot had no way to say it accepts no publications). `tests/e2e/test_one_rule_two_evaluators.py` holds the Depot's licence evaluation and the station's `OdrlNegotiator` to one another, which is what ADR-036 means by *whatever a station concludes about a clause, a Depot must conclude about the same clause*. Q21 was answered on 13 September 2026 (ADR-035, ADR-036) and no longer blocks anything. **M5's browser acceptance** is one command away: `make up` brings the whole ecosystem up in Docker, consoles included, and its Depot can now be withdrawn from and watched. Eleven screens exist: station S1, S2, S3, S6, S7, S8 and the public page S9; Handler H1, H2, H3 and H4; plus the Depot and registry read consoles. What is left all acts *as a controller* — station S4 and S5, and H2's dispatch step — and WP-5.5's Depot console now has a write surface to drive. WP-5.0 through WP-5.4 are done: FDT-O is at 4.0.0, a train declares the data it needs, a Depot is the authority for it, a registry answers which stations hold it and names the property the others were missing, and two stations in two networks show the difference between a decision a machine may take and one it may not. The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always.
 
 | | | |
 |---|---|---|
 | **M0** Foundations | ✅ done | 12 Sep 2026 |
 | **M1** One visit | ✅ done | 12 Sep 2026 |
-| **M5** Testbed (new — ADR-029) | 🟨 in progress — WP-5.0–5.4 done; WP-5.5 at 11 of 13 screens. **Q21 answered 13 Sep 2026** (ADR-035, ADR-036); the remaining two are unblocked, contracts first | |
+| **M5** Testbed (new — ADR-029) | 🟨 in progress — WP-5.0–5.4 and 5.2b done; WP-5.5 at 11 of 13 screens. The Depot publishes, is taken from and is withdrawn from (ADR-036); S4, S5 and H2's dispatch remain | |
 | **M2** Fan-out and governance | 🟨 in progress — WP-2.4's controller API done | |
 | **M3** Multi-hop | ⬜ not started | |
 | **M4** Hardening and alignment | ⬜ not started | |
@@ -223,6 +223,58 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       it is the new **pass 11**, which counts the focus nodes every shape selects — and which
       checks its own detector against a shape built to come out dead, so "0 dead" cannot itself
       be vacuous. 20 mutations, 0 survivors, against a green control run.
+- [x] **WP-5.2b — The Depot's write surface** · 5.2 · L — **done 13 Sep 2026.**
+      `fdt-depot` 0.2.0, `fdt-commons` 0.29.0. Three operations (ADR-036), every one of them
+      driven by a contracts fixture: `POST /trains`, `POST /trains/{t}/take`,
+      `POST /trains/{t}/withdraw`. The valid fixtures pass through the code and the three
+      counter-examples are refused **with the message the shape carries**, which is tested as a
+      substring of `fdts:TrainOfferShape`'s own words rather than as this repository's
+      paraphrase of them.
+      **This is what closes finding 70.** ADR-029 made the Depot the authority for a train and
+      gave it eight `GET`s, so a train became authoritative by being a file somebody put on its
+      disk — which makes the real authority whoever has shell access. Publishing is now the
+      creator's, signed, and atomic: the description parses, the shapes accept it, the bytes
+      hash to what it declares, and the signature is the named creator's, or nothing has
+      happened at all.
+      **Two contract defects found by implementing it.** **Finding 71** — `signedDigest` was
+      specified as "over the canonical description and the payload bytes together", which is a
+      sentence and not an algorithm; two implementations guessing differently produce signatures
+      neither can check, and the symptom looks like tampering rather than like a specification
+      gap. `protocol/train-publication.md` §1 now defines it, over the **whole submitted graph**
+      and not the train's bounded description — a bounded description follows blank nodes only,
+      so it would have left the licence and the creator's own name substitutable. **Finding 72**
+      — a Depot that publishes a curated corpus had no way to say so; `501` now says it, on the
+      two operations that write, and `POST /take` needs none because it changes nothing.
+      **A store, because a train published into memory is not published**, and a withdrawal
+      held in memory is a takedown that comes back on reboot. Publications and withdrawals go to
+      disk whole or not at all, and every payload is re-hashed on every load — a published train
+      exactly as a curated one.
+      **Take is `agreement-derivation.md`, unchanged.** ADR-036 forbids the fork, and nothing
+      but a test holds two implementations in two repositories together:
+      `tests/e2e/test_one_rule_two_evaluators.py` runs one clause specification through the
+      station's `OdrlNegotiator` and this Depot's `LicenceEvaluator` and compares the verdicts,
+      including the granted actions and the carried terms. Where a Depot is *narrower* — it
+      holds no eligibility facts and has nobody to ask — the asymmetry is asserted rather than
+      papered over, so a future change that quietly made the Depot credulous cannot pass as an
+      improvement. The agreement also goes back through `tools/derivation.py`, the contracts'
+      own checker, and the three digests it pins are the ones `stamp` wrote into
+      `examples/train-taken.ttl` — computed independently at both ends, so they agree only if
+      the canonicalisation does.
+      **Q25** records what a Depot does with a licence that asks for a person: it has nobody to
+      ask, and ADR-032 says where a machine may not grant it may not refuse either, so it says
+      exactly that, names the clause, and does not use the word Refused.
+      **One real defect found while testing:** the JSON-LD path honoured whatever `@context` a
+      document named, so reading a stranger's request meant an outbound HTTP request to a URL
+      they chose — inside the thing deciding whether to trust them. The first test written for
+      it spied on `urllib.request.urlopen` and passed against a Depot that *did* fetch, because
+      rdflib binds that name at import; it now asserts the property directly, with a context
+      that cannot resolve.
+      30 mutations, 28 caught against a verified green control; one is the equivalent mutant
+      already noted in `holdings.py`, and the other was a real gap — every credential test used
+      a token differing in its first character, so a one-character comparison passed all of
+      them. Near-misses are tested now. The testbed's Depot has a store, an operator and a
+      credential, so `make up` can be withdrawn from and watched; publishing there needs a
+      creator key set, which is deliberately not configured.
 - [x] **WP-5.3 — Metadata registry v0 (`FDTRegistry`)** · 5.0, 5.2 · L — **done 13 Sep 2026.**
       `fdt-registry` 0.1.0, `fdt-commons` 0.20.0. Both clauses of the criterion run in
       `make e2e` with four real components and no fakes: a Handler resolves the target set from

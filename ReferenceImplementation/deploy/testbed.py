@@ -102,9 +102,20 @@ def _resolve(values: dict[str, str]) -> dict[str, str]:
     checkout, and a subprocess started from anywhere would not find it. Substituting the
     absolute prefix here keeps the profile readable and keeps the runner from having to know
     which keys hold paths.
+
+    `.testbed/` is the other prefix: runtime state a component writes rather than reads. It
+    resolves to the same place under both ways of running this testbed — the checkout on a
+    developer's machine, and `/fdt/.testbed` inside a container, which the image creates and
+    owns so the unprivileged user can write there. Compose declares no volume, so a container's
+    is gone with the container, which is what "`make down && make up` is a clean testbed" means.
     """
-    prefix = str(COMMONS) + "/"
-    return {key: value.replace("fdt-commons/", prefix) for key, value in values.items()}
+    prefixes = {"fdt-commons/": str(COMMONS) + "/", ".testbed/": str(ROOT / ".testbed") + "/"}
+    resolved = {}
+    for key, value in values.items():
+        for prefix, absolute in prefixes.items():
+            value = value.replace(prefix, absolute)
+        resolved[key] = value
+    return resolved
 
 
 def _environment(component: Component) -> dict[str, str]:

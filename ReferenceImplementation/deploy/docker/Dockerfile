@@ -72,4 +72,10 @@ COPY deploy/ deploy/
 # Nothing here writes to the checkout, and a testbed that ran as root would be teaching a
 # deployment habit rather than demonstrating a protocol.
 RUN useradd --create-home --uid 10001 fdt
+# Runtime state a component writes: the Depot's store of published trains and the withdrawals
+# recorded on them (ADR-036). `/fdt` itself stays root-owned and read-only to the component —
+# nothing that arrives over HTTP has any business landing beside the contracts — and this one
+# directory is the component's to write. No volume is declared for it: this is a testbed, and a
+# container's store is gone with the container, which is what `make down && make up` means.
+RUN mkdir -p /fdt/.testbed && chown fdt:fdt /fdt/.testbed
 USER fdt
