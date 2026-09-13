@@ -8,14 +8,14 @@ is wrong — it names a fixture that does not exist, or a decision has since ove
 is noted under the package and carries the id of the sweep item or question that settles it
 (`docs/reviews/2026-09-12-acceptance-criteria-sweep.md`, [`OPEN-QUESTIONS.md`](OPEN-QUESTIONS.md)).
 
-**Next:** **WP-5.5 — the consoles**, which is what M5 exists to produce: the ecosystem as something you can watch rather than only something the tests assert. WP-5.0 through WP-5.4 are done — FDT-O is at 4.0.0, a train declares the data it needs, a Depot is the authority for it, a registry answers which stations hold it and names the property the others were missing, and two stations in two networks now show the difference between a decision a machine may take and one it may not. The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always.
+**Next:** **finishing WP-5.5 — the consoles**, which is what M5 exists to produce: the ecosystem as something you can watch rather than only something the tests assert. Six screens of it exist (station S2, S3, S8; Handler H3; the Depot and registry read consoles); **M5 does not close until the rest do and the acceptance run is done in a browser.** Work on M2 began in parallel because WP-2.4's controller API was the prerequisite for console S3. WP-5.0 through WP-5.4 are done — FDT-O is at 4.0.0, a train declares the data it needs, a Depot is the authority for it, a registry answers which stations hold it and names the property the others were missing, and two stations in two networks now show the difference between a decision a machine may take and one it may not. The decision interview of 13 September 2026 closed every question that blocked M2 and M5: **ADR-030** — a train declares the data it needs as a SHACL model, non-RDF stations map with RML and publish a generated shape, and matching is structural coverage; **ADR-031** — a credential proves what a train's metadata only names; **ADR-032** — where a machine may not grant it may not refuse either, and must instead present its recommendation and evidence to a person; **ADR-033** — `fdt-o:DatasetPart`; and **ADR-028** accepted. Contracts move first, as always.
 
 | | | |
 |---|---|---|
 | **M0** Foundations | ✅ done | 12 Sep 2026 |
 | **M1** One visit | ✅ done | 12 Sep 2026 |
-| **M5** Testbed (new — ADR-029) | 🟨 in progress — WP-5.0, 5.1, 5.2 done | |
-| **M2** Fan-out and governance | ⬜ not started | |
+| **M5** Testbed (new — ADR-029) | 🟨 in progress — WP-5.0–5.4 done; **WP-5.5 part built** | |
+| **M2** Fan-out and governance | 🟨 in progress — WP-2.4's controller API done | |
 | **M3** Multi-hop | ⬜ not started | |
 | **M4** Hardening and alignment | ⬜ not started | |
 
@@ -320,7 +320,9 @@ forward, and console work that sat in WP-2.7 and WP-3.5 now has a reason to exis
       operator API and — the Handler had no HTTP server at all — `handler-api.yaml`.
       Building them found findings 60 and 61.
       Still to build: S1, S6, S7, the rest of S8, S9; H1, H2, H4; the Depot's publish/withdraw
-      surface. S3 approvals and the Depot's writes both wait on WP-2.4's identity model.)*
+      surface, and the Handler client (connect to a registry, select and parametrise a train,
+      choose an itinerary strategy). **S3 Approvals was since built, in WP-2.4** — it needed
+      the controller API, not the identity model. The Depot's writes still wait on Q21.)*
       **Handler client:** connect to `FDTRegistry` instances, select and parametrise trains,
       choose an itinerary strategy, watch the run.
       The **Individual Gateway is not in M5** — it lands in M2 with the controller workflow it
